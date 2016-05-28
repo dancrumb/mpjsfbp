@@ -2,6 +2,8 @@
 
 var chai = require('chai');
 var IP = require('../core/IP');
+var Fiber = require('fibers');
+var Process = require('../core/Process');
 
 global.expect = chai.expect;
 
@@ -26,4 +28,13 @@ global.MockReceiver = function (outputArray) {
       this.dropIP(ip);
     }
   };
+};
+
+global.TestFiber = function(action) {
+  Fiber(function() {
+    var mockProcess = new Process("test", function() {console.log("Test Process");});
+
+    Fiber.current.fbpProc = mockProcess;
+    action(mockProcess);
+  }).run();
 };
