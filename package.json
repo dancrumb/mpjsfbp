@@ -43,7 +43,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "npm install && mocha --ui mocha-fibers --recursive -R spec --require test/test_helper.js test/components test/core",
+    "test": "npm install && istanbul cover _mocha",
     "lint": "eslint components core examples test index.js",
     "ws": "js-beautify -r -f core/*.js components/*.js core/runtimes/FiberRuntime/index.js "
   }
