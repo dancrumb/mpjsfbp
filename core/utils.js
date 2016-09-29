@@ -11,19 +11,17 @@ function getInportWithData(inportArray) {
     var conn = inport ? inport.conn : false;
     if (!conn) {
       return false;
-    }
-    else if (conn.usedslots > 0) {  // connection has data
+    } else if (conn.usedslots > 0) { // connection has data
       return true;
     }
 
-    allDrained = allDrained && conn.closed;  // no data but not all closed, so suspend
+    allDrained = allDrained && conn.closed; // no data but not all closed, so suspend
     return false;
   });
 
   if (inportElementWithData >= 0) {
     trace('findIPE_with_data - found: ' + inportElementWithData);
-  }
-  else if(allDrained) {
+  } else if (allDrained) {
     trace('findIPE_with_data: all drained');
   } else {
     inportElementWithData = null;
@@ -62,38 +60,10 @@ module.exports.findInputPortElementWithData = function (array) {
   while (true) {
     var inportWitData = getInportWithData(array);
 
-    if(inportWitData.inportElementWithData  !== null) {
+    if (inportWitData.inportElementWithData !== null) {
       return inportWitData.inportElementWithData;
     }
 
-    proc.status = ProcessStatus.WAITING_TO_FIPE;
-    proc.yielded = true;
-    trace('findIPE_with_data: susp');
-
-    Fiber.yield();
-    proc.status = ProcessStatus.ACTIVE;
-    proc.yielded = false;
-    trace('findIPE_with_data: resume');
+    proc.yield(ProcessStatus.WAITING_TO_FIPE);
   }
-};
-
-module.exports.Enum = function (constants) {
-  var _map = {};
-  var enumTable = {
-    __lookup: function (constantValue) {
-      return _map[constantValue] || null;
-    }
-  };
-
-  var counter = 1;
-  constants.forEach(function (name) {
-    if (name === '__lookup') {
-      throw 'You must not specify a enum constant named "__lookUp"! This name is reserved for the lookup function.';
-    }
-    enumTable[name] = counter;
-    _map[counter] = name;
-    counter++;
-  });
-
-  return Object.freeze(enumTable);
 };

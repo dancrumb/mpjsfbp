@@ -63,6 +63,8 @@ These tests (except for `fbptestws`) can be run sequentially by running `fbptest
  
 # Components
 
+- `breader` - reads from a binary file specified by FILE IIP and sends one IP per byte in the file. Starts sending IPs as soon as first byte is read.
+- `bwriter` - takes a stream of IPs containing bytes and writes them to a file from its FILE IIP. Starts writing as soon as the first IP comes in.
 - `collate` - collates from 1 to any number of sorted input streams, generating merged stream with bracket IPs inserted (sort fields assumed to be contiguous starting at 1st byte; all streams assumed to be sorted on same fields, in ascending sequence) 
 - `concat`  - concatenates all the streams that are sent to its array input port (size determined in network definition) 
 - `copier`  - copies its input stream to its output stream
@@ -114,7 +116,8 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 1. Generate an `.fbp` file that complies with the specification under [parsefbp](https://github.com/jpaulm/parsefbp).
 2. Get access to JSFBP: `var fbp = require('fbp')`
 3. Load the contents of the `.fbp` file into a String: `fs.readFile(__dirname + '/network.fbp' ...);`
-4. Create a new network: `var network = new fbp.Network.createFromGraph(fileContents);`
+4. Create a new network: `var network = new fbp.Network.createFromGraph(fileContents);` If you're using components
+   that are local to your application, use a second parameter giving the directory that contains your components. 
 5. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
 6. Run it!
 ```
@@ -134,6 +137,9 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
   possiblities:
     - If the component string starts `'./'` then the component is assumed to be one of he JSFBP components and is loaded.
   For example: `'./components/copier.js'`
+    - If the component string starts with `'/'` then the component is assumed to be local to the application. If your network has
+    local components, then the network needs to have been instantiated with a `{ componentRoot: 'dir' }` object so that
+    it knows where to find the components.
     - If the component string contains a `/`, then it assumed to be of the form `'package/component'`. Thus `package` is loaded
   and then `component` is retrieved from it. If `package` is `'jsfbp'`, then it is loaded from the JSFBP `components` directory.
     - Otherwise, the string is assumed to be a node module that _is_ an FBP component and it is simply
@@ -155,7 +161,7 @@ Component services
 - In what follows, the `this` is only valid if the function is called from the component level; if called from a subroutine, pass in `this` as a parameter.
 
 - `var ip = this.createIP(contents);` - create an IP containing `contents`
-- `var ip = this.createIPBracket(IP.OPEN|IP.CLOSE[, contents])` - create an open or close bracket IP
+- `var ip = this.createIPBracket(this.IPTypes.OPEN|this.IPTypes.CLOSE[, contents])` - create an open or close bracket IP
 - **Be sure** to include IP: `var IP = require('IP')` to gain access to the IP constants.
 - `this.dropIP(ip);` - drop IP
   
@@ -194,7 +200,7 @@ We use `node-fibers` which is known to work with `Node.js 12.7` (as of 24.07.201
 1. Install node.js - see http://nodejs.org/download/  . 
 2. Clone or download this project
 3. Execute `npm install`
-   There was a case, where `npm install` reported that `node-fibers` is missing. If this happens, just execute `npm install fibers` by hand.
+   Install requires the following `npm` packages: `parsefbp`, `fibers`, `mocha`, `chai`, `lodash` and `mocha-fibers` - you may have to do `npm` installs for some or all of these.
    
    If you get an MSB4019 or similar error messages involving `utf-8-validate` and `bufferutil` (some dependencies deep down the dependency tree), you can just ignore them, given the optional nature of these components' compilation.
 
@@ -218,7 +224,7 @@ If you wish to eliminate the errors mentioned in point #3 under *Install*, you w
         -  e.g. `SET PATH=C:\path\to\python2-directory\;%PATH%`
 7. Execute `npm install`
 8. Run `node examples/fbptestxx.js`, where `fbptestxx` is any of the tests listed above. If tracing is desired, change the value of the `trace` variable at the bottom of `fbptestxx.js` to `true`. 
-9. If `npm install` reports `node-fibers` missing, execute `npm install fibers`
+9. Install requires the following `npm` packages: `parsefbp`, `fibers`, `mocha`, `chai`, `lodash` and `mocha-fibers` - you may have to do `npm` installs for some or all of these.
 10. All these tests can be run sequentially by running `examples/fbptests.bat`, or by running `examples/fbptests.sh` under `bash`.
 
 *Important* - BitDefender Antivirus 2016 anti-ransomware feature seems to interfere with `git`- we suggest you leave it turned off while working with `git`.
@@ -279,5 +285,10 @@ nally. FBP is
 Performance
 ---
 
-The volume test case (`fbptestvl`) with 100,000,000 IPs running through three processes took 164 seconds, on my machine which has 4 AMD Phenom(tm) II X4 925 processors,.  Since there are two connections, giving a total of 200,000,000 send/receive pairs, this works out to approx. 0.82 microsecs per send/receive pair. Of course, as it is JavaScript, this test only uses 1 core intensively, although there is some matching activity on the other cores (why...?!)
+The volume test case (`fbptestvl`) with 100,000,000 IPs running through three processes took 164 seconds, on my machine 
+which has 4 AMD Phenom(tm) II X4 925 processors.  
+
+Since there are two connections, giving a total of 200,000,000 send/receive pairs, this works out to approx. 
+0.82 microsecs per send/receive pair. Of course, as it is JavaScript, this test only uses 1 core intensively, 
+although there is some matching activity on the other cores (why...?!)
 

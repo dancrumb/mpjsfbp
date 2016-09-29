@@ -1,3 +1,4 @@
+
 var MockSenderGenerator = function (inputArray) {
   initByPort = false;
   if(!inputArray) {
@@ -9,12 +10,16 @@ var MockSenderGenerator = function (inputArray) {
       var inputJSON = inport.receive();
       inputArray = JSON.parse(inputJSON.contents);
       this.dropIP(inputJSON);
-      console.log("Got "+ inputArray);
     }
     var outport = this.openOutputPort('OUT');
     var proc = this;
     inputArray.forEach(function (item) {
-      outport.send(proc.createIP(item));
+      if(item === "IP.OPEN" || item === "IP.CLOSE") {
+        var bracket = item.split('.')[1];
+        outport.send(proc.createIPBracket(proc.IPTypes[bracket]));
+      } else {
+        outport.send(proc.createIP(item));
+      }
     });
   };
 };

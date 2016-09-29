@@ -4,15 +4,28 @@
 
 var Fiber = require('fibers');
 
-module.exports = function(message) {
-  if(global.trace) {
-    if (Fiber.current) {
-      var proc = Fiber.current.fbpProc;
-      console.log(proc.name + ' ' + message);
-
-    } else {
-      console.log("NOPROC: " + message);
+module.exports = function (message) {
+  if (global.trace) {
+    var calledAs = "";
+    if (this && this.name) {
+      calledAs = this.name;
     }
-  }
+    var fiberProc = "no-fiber";
+    if (Fiber.current) {
+      if (Fiber.current.fbpProc) {
+        fiberProc = Fiber.current.fbpProc.name;
+      } else {
+        fiberProc = "runtime";
+      }
+    }
 
+    var tag = "[" + fiberProc + "->" + calledAs + "]";
+    if (fiberProc === calledAs) {
+      tag = "[" + calledAs + "]";
+    } else if (!calledAs) {
+      tag = "[" + fiberProc + "]";
+    }
+
+    console.log(tag + ' ' + message);
+  }
 };
