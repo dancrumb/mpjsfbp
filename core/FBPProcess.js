@@ -4,7 +4,7 @@
 var Fiber = require('fibers'),
   Enum = require('./Enum'),
   IP = require('./IP'),
-  _ = require('lodash'),
+  PortManager = require('./PortManager'),
   InputPort = require('./InputPort'),
   OutputPort = require('./OutputPort');
 
@@ -27,6 +27,8 @@ var FBPProcess = module.exports = function () {
     }
 
     var process = this;
+    this.portManager = new PortManager(this.name);
+
 
     details.in.forEach(function (portName) {
       var inputPort = new InputPort(process, portName);
@@ -48,7 +50,8 @@ var FBPProcess = module.exports = function () {
           }
         });
       });
-      return inputPort;
+
+      process.addInputPort(inputPort);
     });
 
     details.out.forEach(function (portName) {
@@ -70,8 +73,10 @@ var FBPProcess = module.exports = function () {
         });
         process.setStatus(FBPProcess.Status.WAITING_TO_SEND);
       });
-      return outputPort;
+
+      process.addOutputPort(outputPort);
     });
+
     this.selfStarting = details.selfStarting;
     this.name = details.name;
 
@@ -162,84 +167,30 @@ FBPProcess.prototype.dropIP = function (ip) {
   this.disownIP(ip);
 };
 
+/*
+ * Port Methods
+ */
 FBPProcess.prototype.addInputPort = function (port) {
-  this.inports[port.portName] = port;
+  this.portManager.addInputPort(port);
 };
 FBPProcess.prototype.addOutputPort = function (port) {
-  this.outports[port.portName] = port;
+  this.portManager.addOutputPort(port);
 };
 
-/*
- * Given a set of ports an a base name XXX, returns all the ports in the set that
- * have the name XXX[<index>]
- */
-function getPortArray(ports, processName, portName) {
-  var re = new RegExp(portName + '\\[\\d+\\]');
-  var portFilter = re.test.bind(re);
-
-  var portArray = Object.keys(ports)
-    .filter(portFilter)
-    .sort()
-    .map(_.partial(portOpener, ports, ''));
-
-  if (portArray.length === 0) {
-    console.log('Port ' + processName + '.' + portName + ' not found');
-    return null;
-  }
-
-  return portArray;
-}
-
-function portOpener(ports, direction, name, opt) {
-  var port = ports[name];
-  if (port) {
-    return port;
-  } else {
-    if (direction === 'OUT' && opt != 'OPTIONAL') {
-      console.log('Port ' + this.name + '.' + name + ' not found');
-    }
-    return null;
-  }
-}
-
 FBPProcess.prototype.openInputPort = function (name) {
-  return portOpener(this.inports, 'IN', name);
+  return this.portManager.openInputPort(name);
 };
 
 FBPProcess.prototype.openInputPortArray = function (name) {
-  return getPortArray(this.inports, this.name, name);
+  return this.portManager.openInputPortArray(name);
 };
 
 FBPProcess.prototype.openOutputPort = function (name, opt) {
-  return portOpener(this.outports, 'OUT', name, opt);
+  return this.portManager.openOutputPort(name, opt);
 };
 
 FBPProcess.prototype.openOutputPortArray = function (name) {
-  return getPortArray(this.outports, this.name, name);
-};
-
-/**
- * Yield the fiber that is running this process
- *
- * @param preStatus FBPProcess status will be set to this before yielding. If not set or set to `null`, the status is not changed
- * @param postStatus FBPProcess status will be set to this after yielding. If not set, the status will be changed to ACTIVE
- */
-FBPProcess.prototype.yield = function (preStatus, postStatus) {
-  if (preStatus !== undefined || preStatus !== null) {
-    this.status = preStatus;
-  }
-  if (postStatus === undefined) {
-    postStatus = FBPProcess.Status.ACTIVE;
-  }
-
-  this.yielded = true;
-
-  Fiber.yield();
-  if (postStatus !== this.status) {
-    this.status = postStatus
-  }
-
-  this.yielded = false;
+  return this.portManager.openOutputPortArray(name);
 };
 
 new FBPProcess();

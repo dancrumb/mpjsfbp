@@ -1,9 +1,21 @@
 var _ = require('lodash');
 
 var PortManager = function (processName, ports) {
-  this.inports = ports.inports || {};
-  this.outports = ports.outports || {};
-  this.name = processName || 'UNKOWN';
+  this.inports = {};
+  this.outports = {};
+  if (ports) {
+    _.forEach(ports.inports, this.addInputPort.bind(this));
+    _.forEach(ports.outports, this.addOutputPort.bind(this));
+  }
+
+  this.name = processName || 'UNKNOWN';
+};
+
+PortManager.prototype.addInputPort = function (port) {
+  this.inports[port.portName] = port;
+};
+PortManager.prototype.addOutputPort = function (port) {
+  this.outports[port.portName] = port;
 };
 
 /*
