@@ -48,6 +48,6 @@
   "scripts": {
     "test": "npm install && istanbul cover _mocha",
     "lint": "eslint components core examples test index.js",
-    "ws": "js-beautify -r -f core/*.js components/*.js core/runtimes/FiberRuntime/index.js "
+    "ws": "js-beautify -r -f core/*.js components/*.js"
   }
 }

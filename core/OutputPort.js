@@ -14,7 +14,7 @@ OutputPort.prototype.constructor = OutputPort;
 OutputPort.prototype.parent = Port.prototype;
 
 OutputPort.prototype.send = function (ip) {
-  process.disownIP(ip);
+  this.process.disownIP(ip);
 
   this.emit("ipSubmitted", {
     portName: this.name,

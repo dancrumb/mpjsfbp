@@ -2,17 +2,18 @@
 
 
 var Fiber = require('fibers'),
-  Enum = require('./Enum'),
+  FBPProcessStatus = require('./FBPProcessStatus'),
   IP = require('./IP'),
   PortManager = require('./PortManager'),
   InputPort = require('./InputPort'),
   OutputPort = require('./OutputPort');
 
 var FBPProcess = module.exports = function () {
-  this.inports = {};
-  this.outports = {};
-  this._status = FBPProcess.Status.NOT_INITIALIZED;
+  this._status = FBPProcessStatus.NOT_INITIALIZED;
   this.ownedIPs = 0;
+  this.componentFiber = Fiber(function () {
+    this.component.call(this);
+  }.bind(this));
   console.log("FBPProcess created\n");
 
   process.once('message', function (message) {
@@ -26,76 +27,79 @@ var FBPProcess = module.exports = function () {
       this.component = details.component.componentField;
     }
 
-    var process = this;
-    this.portManager = new PortManager(this.name);
 
+    this.portManager = new PortManager(this.name);
+    this.selfStarting = details.selfStarting;
+    this.name = details.name;
+
+    var fbpProcess = this;
 
     details.in.forEach(function (portName) {
-      var inputPort = new InputPort(process, portName);
+      var inputPort = new InputPort(fbpProcess, portName);
       inputPort.on("ipRequested", function (e) {
-        process.send('message', {
+        process.send({
           type: "IP_REQUESTED",
           details: {
-            process: process.name,
+            process: fbpProcess.name,
             port: e.portName
           }
         });
-        process.setStatus(FBPProcess.Status.WAITING_TO_RECEIVE);
+        fbpProcess.setStatus(FBPProcessStatus.WAITING_TO_RECEIVE);
 
         process.once('message', function (message) {
+          var ip = null;
           if (message.type === 'IP_INBOUND') {
             var details = message.details;
-            var ip = details.ip;
-            Fiber.current.run(ip);
+            ip = details.ip;
+          } else if (message.type === 'IIP_INBOUND') {
+            var data = message.details;
+            ip = new IP(data);
+          }
+
+          if (ip) {
+            ip.owner = fbpProcess;
+            fbpProcess.setStatus(FBPProcessStatus.ACTIVE);
+            fbpProcess.componentFiber.run(ip);
           }
         });
       });
 
-      process.addInputPort(inputPort);
+      fbpProcess.addInputPort(inputPort);
     });
 
     details.out.forEach(function (portName) {
-      var outputPort = new OutputPort(process, portName);
+      var outputPort = new OutputPort(fbpProcess, portName);
       outputPort.on("ipSubmitted", function (e) {
-        process.send('message', {
+        process.send({
           type: "IP_AVAILABLE",
           details: {
-            process: process.name,
+            process: fbpProcess.name,
             port: e.portName,
             ip: e.ip
           }
         });
+
         process.once('message', function (message) {
           if (message.type === 'IP_ACCEPTED') {
-            process.setStatus(FBPProcess.Status.ACTIVE);
-            Fiber.current.run();
+            fbpProcess.setStatus(FBPProcessStatus.ACTIVE);
+            fbpProcess.componentFiber.run();
           }
         });
-        process.setStatus(FBPProcess.Status.WAITING_TO_SEND);
+
+        fbpProcess.setStatus(FBPProcessStatus.WAITING_TO_SEND);
       });
 
-      process.addOutputPort(outputPort);
+      fbpProcess.addOutputPort(outputPort);
     });
 
-    this.selfStarting = details.selfStarting;
-    this.name = details.name;
-
     console.log("FBPProcess initialized: " + this);
-    this.setStatus(FBPProcess.Status.INITIALIZED);
+    this.setStatus(FBPProcessStatus.INITIALIZED);
+    if (this.selfStarting) {
+      this.activate();
+    }
   }.bind(this))
 
 };
-
-FBPProcess.Status = Enum([
-  'NOT_INITIALIZED',
-  'INITIALIZED',
-  'ACTIVE',
-  'WAITING_TO_RECEIVE',
-  'WAITING_TO_SEND',
-  'DORMANT',
-  'CLOSED',
-  'DONE'
-]);
 
 FBPProcess.prototype.setStatus = function (newStatus) {
   var oldStatus = this._status;
@@ -118,15 +122,14 @@ FBPProcess.prototype.IPTypes = IP.Types;
 FBPProcess.prototype.toString = function () {
   return "FBPProcess: { \n" +
     "  name: " + this.name + "\n" +
-    "  inports: " + Object.keys(this.inports) + "\n" +
-    "  outports: " + Object.keys(this.outports) + "\n" +
+    "  ports: " + this.portManager + "\n" +
     "  status: " + this.getStatusString() + "\n" +
     "  selfStarting: " + this.isSelfStarting() + "\n" +
     "}";
 };
 
 FBPProcess.prototype.getStatusString = function () {
-  return FBPProcess.Status.__lookup(this._status);
+  return FBPProcessStatus.__lookup(this._status);
 };
 
 FBPProcess.prototype.isSelfStarting = function () {
@@ -152,7 +155,7 @@ FBPProcess.prototype.createIPBracket = function (bktType, x) {
 
 FBPProcess.prototype.disownIP = function (ip) {
   if (ip.owner != this) {
-    throw new Error(this.name + ' IP being disowned is not owned by this FBPProcess: ' + ip);
+    throw new Error(this.name + ' IP being disowned is not owned by this FBPProcess: ' + ip.toString());
   }
   this.ownedIPs--;
   ip.owner = null;
@@ -165,6 +168,14 @@ FBPProcess.prototype.dropIP = function (ip) {
   }
 
   this.disownIP(ip);
+};
+
+FBPProcess.prototype.activate = function () {
+  if (this._status === FBPProcessStatus.ACTIVE) {
+    throw new Error('Attempted to activate an active FBP Process: ' + this.name);
+  }
+  this.setStatus(FBPProcessStatus.ACTIVE);
+  this.componentFiber.run();
 };
 
 /*

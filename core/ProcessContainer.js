@@ -13,7 +13,8 @@ var ProcessContainer = function (processDetails) {
 
   console.log("Creating FBPProcess");
   this.process = fork(__dirname + '/FBPProcess.js');
-  if (!this.process) {
+  var osProcess = this.process;
+  if (!osProcess) {
     console.error("FBPProcess not created");
   }
 
@@ -25,7 +26,7 @@ var ProcessContainer = function (processDetails) {
     return connections;
   }, {});
 
-  this.process.on('message', function (message) {
+  osProcess.on('message', function (message) {
     if (message.type === 'STATUS_UPDATE') {
       this.emit('statusChange', {
         name: message.name,
@@ -37,7 +38,9 @@ var ProcessContainer = function (processDetails) {
       var connection = this.outgoingConnections[details.port];
       connection.queue.enqueue(details.ip);
       if (connection.queue.length < connection.capacity) {
-        this.process.send('IP_ACCEPTED');
+        osProcess.send({
+          type: 'IP_ACCEPTED'
+        });
       }
     } else if (message.type === 'IP_REQUESTED') {
       this.emit('ipRequested', message.details);
@@ -47,13 +50,19 @@ var ProcessContainer = function (processDetails) {
     }
   }.bind(this));
 
-  this.process.send({
+  osProcess.send({
     type: "INITIALIZE",
     details: processDetails
   });
-
 };
 
 util.inherits(ProcessContainer, EventEmitter);
+
+ProcessContainer.prototype.deliverIIP = function (portName, data) {
+  this.process.send({
+    type: "IIP_INBOUND",
+    details: data
+  });
+};
 
 module.exports = ProcessContainer;

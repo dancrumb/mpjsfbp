@@ -8,22 +8,29 @@ var NetworkRouter = function (connections) {
 };
 
 function findOtherEnd(process, port, direction) {
+  var portDetails = port.split('.');
+  if (portDetails.length === 1) {
+    port = portDetails[0]
+  } else {
+    if (portDetails[0] !== process) {
+      throw new Error("Process and Port mismatch!");
+    }
+    port = portDetails[1]
+  }
+
+  console.log("Finding %s target for %s and %s", direction, process, port);
 
   var target = this.connections[process][direction][port];
-
-  return {
-    process: target.process,
-    port: target.port
-  }
+  return target || [];
 }
 
 NetworkRouter.prototype.getSendTarget = function (source) {
-  return findOtherEnd(source.process, source.port, 'out');
+  return findOtherEnd.call(this, source.process, source.port, 'out')[0];
 
 };
 
 NetworkRouter.prototype.getReceiveTargets = function (source) {
-  return findOtherEnd(source.process, source.port, 'in');
+  return findOtherEnd.call(this, source.process, source.port, 'in');
 };
 
 

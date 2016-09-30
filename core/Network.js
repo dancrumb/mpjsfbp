@@ -1,5 +1,6 @@
 var path = require('path'),
   parseFBP = require('parsefbp'),
+  FBPProcessStatus = require('./FBPProcessStatus'),
   _ = require('lodash'),
   ProcessContainer = require('./ProcessContainer'),
   NetworkRouter = require('./NetworkRouter');
@@ -251,10 +252,23 @@ Network.prototype.run = function (options, callback) {
       callback
     );
     container.on('statusChange', function (e) {
-      console.log(e);
+      console.log({
+        old: FBPProcessStatus.__lookup(e.oldStatus),
+        new: FBPProcessStatus.__lookup(e.newStatus),
+        name: e.name
+      });
       updates++;
       if (updates >= 4) {
         callback();
+      }
+    });
+    container.on('ipRequested', function (e) {
+      console.log(e);
+      var target = network.router.getReceiveTargets(e);
+      console.log(target);
+      // FIXME: A hack for a single IIP connected to an input port
+      if (target[0].data) {
+        container.deliverIIP(e.port, target[0].data);
       }
     });
     return container;

@@ -18,7 +18,7 @@ util.inherits(Port, EventEmitter);
 
 Object.defineProperty(Port.prototype, 'name', {
   get: function () {
-    return this.processName + "." + this.portName;
+    return this.portName;
   }
 });
 

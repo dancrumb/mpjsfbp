@@ -22,3 +22,11 @@ IP.Types = new Enum([
     }
   });
 });
+
+IP.prototype.toString = function () {
+  return "IP: { \n" +
+    " type:" + IP.Types.__lookup(this.type) + ", \n" +
+    " owner: " + this.owner + ",\n" +
+    " contents: " + ((this.contents === null) ? "<null>" : "<data>") + "\n" +
+    "}"
+}

@@ -66,7 +66,7 @@ describe('PortManager', function() {
 
   });
 
-  it('provides access to output ports', function() {
+  it('provides access to output port arrays', function() {
     var pm = new PortManager('PROCESS', {
       outports: {
         'OUT[0]' : { portName: 'OUT[0]' },

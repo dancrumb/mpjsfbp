@@ -31,7 +31,7 @@ describe('Network', function () {
     expect(process.location).to.have.a.property('componentField').and.to.contain('getP3');
   });
 
-  it('can be created from an FBP file', function (done) {
+  it.skip('can be created from an FBP file', function (done) {
     fs.readFile(__dirname + '/network.fbp', 'utf8', function (err, graph) {
       if (err) {
         return done(err);
@@ -44,7 +44,7 @@ describe('Network', function () {
           "OUT": { "process": "collate", "port": "IN[0]", "capacity": 5 }
         },
         "in": {
-          "DATA": [ { "data": '["1,m1", "2,m2", "3,m3"]' } ]
+          "IN": [ { "data": '["1,m1", "2,m2", "3,m3"]' } ]
         }
       });
       expect(network.getProcessConnections("sender1")).to.eql({
@@ -52,7 +52,7 @@ describe('Network', function () {
           "OUT": { "process": "collate", "port": "IN[1]", "capacity": 5 }
         },
         "in": {
-          "DATA": [ { "data": '["1,d11", "1,d12", "2,d21", "3,d31", "3,d32", "3,d33", "4,d41"]' } ]
+          "IN": [ { "data": '["1,d11", "1,d12", "2,d21", "3,d31", "3,d32", "3,d33", "4,d41"]' } ]
         }
       });
       expect(network.getProcessConnections("collate")).to.eql({
@@ -75,7 +75,7 @@ describe('Network', function () {
       var receiverProcess = network.getProcessByName("receiver");
       expect(receiverProcess).to.be.ok;
 
-      network.run(done);
+      network.run();
 
     });
   });

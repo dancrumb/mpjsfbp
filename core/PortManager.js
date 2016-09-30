@@ -67,4 +67,9 @@ PortManager.prototype.openOutputPortArray = function (name) {
   return getPortArray(this.outports, this.name, name);
 };
 
+PortManager.prototype.toString = function () {
+  return "in: " + Object.keys(this.inports) + "; " +
+    "out: " + Object.keys(this.outports);
+};
+
 module.exports = PortManager;
