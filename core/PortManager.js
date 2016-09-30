@@ -19,8 +19,8 @@ PortManager.prototype.addOutputPort = function (port) {
 };
 
 /*
- * Given a set of ports an a base name XXX, returns all the ports in the set that
- * have the name XXX[<index>]
+ * Given a set of ports an a base name ABC, returns all the ports in the set that
+ * have the name ABC[<index>]
  */
 function getPortArray(ports, processName, portName) {
   var re = new RegExp(portName + '\\[\\d+\\]');

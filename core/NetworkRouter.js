@@ -7,28 +7,23 @@ var NetworkRouter = function (connections) {
   console.log("NetworkRouter", connections);
 };
 
-NetworkRouter.prototype.getSendTarget = function (source) {
-  var process = source.process;
-  var port = source.port;
+function findOtherEnd(process, port, direction) {
 
-  var target = this.connections[process].out[port];
+  var target = this.connections[process][direction][port];
 
   return {
     process: target.process,
     port: target.port
   }
+}
+
+NetworkRouter.prototype.getSendTarget = function (source) {
+  return findOtherEnd(source.process, source.port, 'out');
+
 };
 
 NetworkRouter.prototype.getReceiveTargets = function (source) {
-  var process = source.process;
-  var port = source.port;
-
-  var target = this.connections[process].in[port];
-
-  return {
-    process: target.process,
-    port: target.port
-  }
+  return findOtherEnd(source.process, source.port, 'in');
 };
 
 
