@@ -36,6 +36,7 @@
     "eslint": "^2.10.2",
     "eslint-config-defaults": "^9.0.0",
     "eslint-plugin-chai-expect": "^1.1.1",
+    "istanbul": "^0.4.5",
     "js-beautify": "^1.6.3",
     "mocha": "^2.1.0",
     "mocha-fibers": "^1.1.0",
