@@ -4,6 +4,7 @@
 var Fiber = require('fibers'),
   Enum = require('./Enum'),
   IP = require('./IP'),
+  _ = require('lodash'),
   InputPort = require('./InputPort'),
   OutputPort = require('./OutputPort');
 
@@ -119,31 +120,6 @@ FBPProcess.prototype.toString = function () {
     "}";
 };
 
-
-/*
- * Given a set of ports an a base name XXX, returns all the ports in the set that
- * have the name XXX[<index>]
- */
-function getPortArray(ports, processName, portName) {
-  var re = new RegExp(portName + '\\[\\d+\\]');
-
-  var portArray = Object.keys(ports)
-    .filter(function (portName) {
-      return re.test(portName);
-    })
-    .sort()
-    .map(function (portName) {
-      return ports[portName];
-    });
-
-  if (portArray.length === 0) {
-    console.log('Port ' + processName + '.' + portName + ' not found');
-    return null;
-  }
-
-  return portArray;
-}
-
 FBPProcess.prototype.getStatusString = function () {
   return FBPProcess.Status.__lookup(this._status);
 };
@@ -193,14 +169,41 @@ FBPProcess.prototype.addOutputPort = function (port) {
   this.outports[port.portName] = port;
 };
 
-FBPProcess.prototype.openInputPort = function (name) {
-  var port = this.inports[name];
+/*
+ * Given a set of ports an a base name XXX, returns all the ports in the set that
+ * have the name XXX[<index>]
+ */
+function getPortArray(ports, processName, portName) {
+  var re = new RegExp(portName + '\\[\\d+\\]');
+  var portFilter = re.test.bind(re);
+
+  var portArray = Object.keys(ports)
+    .filter(portFilter)
+    .sort()
+    .map(_.partial(portOpener, ports, ''));
+
+  if (portArray.length === 0) {
+    console.log('Port ' + processName + '.' + portName + ' not found');
+    return null;
+  }
+
+  return portArray;
+}
+
+function portOpener(ports, direction, name, opt) {
+  var port = ports[name];
   if (port) {
     return port;
   } else {
-    console.log('Port ' + this.name + '.' + name + ' not found');
+    if (direction === 'OUT' && opt != 'OPTIONAL') {
+      console.log('Port ' + this.name + '.' + name + ' not found');
+    }
     return null;
   }
+}
+
+FBPProcess.prototype.openInputPort = function (name) {
+  return portOpener(this.inports, 'IN', name);
 };
 
 FBPProcess.prototype.openInputPortArray = function (name) {
@@ -208,15 +211,7 @@ FBPProcess.prototype.openInputPortArray = function (name) {
 };
 
 FBPProcess.prototype.openOutputPort = function (name, opt) {
-  var port = this.outports[name];
-  if (port) {
-    return port;
-  } else {
-    if (opt != 'OPTIONAL') {
-      console.log('Port ' + this.name + '.' + name + ' not found');
-    }
-    return null;
-  }
+  return portOpener(this.outports, 'OUT', name, opt);
 };
 
 FBPProcess.prototype.openOutputPortArray = function (name) {
