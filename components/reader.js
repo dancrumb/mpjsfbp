@@ -1,6 +1,7 @@
 'use strict';
 
 var _ioHelper = require('./_ioHelper');
+var sendArray = require('./_arrayToIps');
 
 // Reader based on Bruno Jouhier's code
 module.exports = function reader(runtime) {
@@ -18,9 +19,6 @@ module.exports = function reader(runtime) {
 
   var outport = this.openOutputPort('OUT');
   var array = result[0].split('\n');
-  array.forEach(function (item) {
-    var ip = this.createIP(item);
-    outport.send(ip);
-  }.bind(this));
+  sendArray.call(this, array, outport);
 
 };

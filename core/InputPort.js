@@ -25,7 +25,12 @@ InputPort.prototype.receive = function () {
   this.emit("ipRequested", {
     portName: this.name
   });
-  return Fiber.yield();
+  var ip = Fiber.yield();
+  console.log('Received: %j', ip ? {
+    type: ip.type,
+    contents: ip.contents
+  } : null);
+  return ip || null;
 };
 
 InputPort.prototype.close = function () {

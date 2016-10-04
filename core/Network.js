@@ -219,6 +219,17 @@ Network.prototype.processIsSelfStarting = function (processName) {
   })
 };
 
+Network.prototype.processPortHasData = function (processName, portName) {
+  var container = this.getContainer(processName);
+  return container.portHasData(portName);
+};
+
+Network.prototype.getContainer = function (processName) {
+  return _.find(this.processContainers, function (container) {
+    return container.name === processName;
+  });
+};
+
 Network.prototype.run = function (options, callback) {
   if (typeof options === 'function') {
     callback = options;
@@ -230,8 +241,6 @@ Network.prototype.run = function (options, callback) {
   var networkProcesses = this._processes;
   var network = this;
 
-
-  var updates = 0;
 
   this.router = new NetworkRouter(this._connections);
   this.processContainers = _.map(networkProcesses, function (details, processName) {
@@ -257,19 +266,53 @@ Network.prototype.run = function (options, callback) {
         new: FBPProcessStatus.__lookup(e.newStatus),
         name: e.name
       });
-      updates++;
-      if (updates >= 4) {
-        callback();
+      container.status = e.newStatus;
+
+      var allInitialized = true;
+      _.forEach(network.processContainers, function (pc) {
+        console.log({
+          name: pc.name,
+          status: FBPProcessStatus.__lookup(pc.status)
+        });
+        allInitialized = allInitialized && pc.status === FBPProcessStatus.INITIALIZED;
+      });
+
+      if (allInitialized) {
+        _.forEach(network.processContainers, function (pc) {
+          pc.commence();
+        });
+
       }
     });
     container.on('ipRequested', function (e) {
-      console.log(e);
-      var target = network.router.getReceiveTargets(e);
-      console.log(target);
-      // FIXME: A hack for a single IIP connected to an input port
-      if (target[0].data) {
-        container.deliverIIP(e.port, target[0].data);
+      console.log('ipRequested: %j', e);
+      var targets = network.router.getReceiveTargets(e);
+      console.log('targets: %j', targets);
+
+      var viableSources = _(targets).filter(function (target) {
+        if ('data' in target) {
+          return true;
+        }
+        return network.processPortHasData(target.process, target.port);
+      });
+      console.log('sources: %j', viableSources.value());
+      var viableSource = viableSources.sample();
+
+      if ('data' in viableSource) {
+        container.deliverIIP(e.port, viableSource.data);
+      } else {
+        var otherContainer = network.getContainer(viableSource.process);
+        var ip = otherContainer.requestIP(viableSource.port);
+        console.log('IP: %j', ip);
+        container.deliverIP(e.port, ip);
       }
+    });
+    container.on('ipAvailable', function (e) {
+      console.log('ipAvaiable: %j', e);
+      var target = network.router.getSendTarget(e);
+      console.log('target: %j', target);
+      var otherContainer = network.getContainer(target.process);
+      otherContainer.signalIPAvailable();
     });
     return container;
   });

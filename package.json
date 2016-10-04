@@ -36,6 +36,7 @@
     "eslint": "^2.10.2",
     "eslint-config-defaults": "^9.0.0",
     "eslint-plugin-chai-expect": "^1.1.1",
+    "flow-bin": "^0.33.0",
     "istanbul": "^0.4.5",
     "js-beautify": "^1.6.3",
     "mocha": "^2.1.0",
@@ -48,6 +49,7 @@
   "scripts": {
     "test": "npm install && istanbul cover _mocha",
     "lint": "eslint components core examples test index.js",
-    "ws": "js-beautify -r -f core/*.js components/*.js"
+    "ws": "js-beautify -r -f core/*.js components/*.js",
+    "flow": "flow; test $? -eq 0 -o $? -eq 2"
   }
 }

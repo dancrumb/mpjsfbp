@@ -18,14 +18,14 @@ function findOtherEnd(process, port, direction) {
     port = portDetails[1]
   }
 
-  console.log("Finding %s target for %s and %s", direction, process, port);
+  console.log("Finding '%s' target for %s.%s", direction, process, port);
 
   var target = this.connections[process][direction][port];
   return target || [];
 }
 
 NetworkRouter.prototype.getSendTarget = function (source) {
-  return findOtherEnd.call(this, source.process, source.port, 'out')[0];
+  return findOtherEnd.call(this, source.process, source.port, 'out');
 
 };
 
