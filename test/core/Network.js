@@ -1,7 +1,7 @@
 var Network = require('../../core/Network');
 var fs = require('fs');
 
-describe.skip('Network', function () {
+describe('Network', function () {
   it('can load FBP components from this module\'s core via path', function () {
     var network = new Network();
     var process = network.defineProcess('./components/copier.js', 'copier');
@@ -31,7 +31,7 @@ describe.skip('Network', function () {
     expect(process.location).to.have.a.property('componentField').and.to.contain('getP3');
   });
 
-  it('can be created from an FBP file', function (done) {
+  it.skip('can be created from an FBP file', function (done) {
     this.timeout(10000);
 
     fs.readFile(__dirname + '/network.fbp', 'utf8', function (err, graph) {
@@ -77,7 +77,7 @@ describe.skip('Network', function () {
       var receiverProcess = network.getProcessByName("receiver");
       expect(receiverProcess).to.be.ok;
 
-      network.run();
+      network.run(done);
 
     });
   });

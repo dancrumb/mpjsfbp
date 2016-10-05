@@ -12,14 +12,37 @@ var Fiber = require('fibers'),
 var osProcess = process;
 
 
+function replaceErrors(key, value) {
+  if (value instanceof Error) {
+    var error = {};
+
+    Object.getOwnPropertyNames(value).forEach(function (key) {
+      error[key] = value[key];
+    });
+
+    return error;
+  }
+
+  return value;
+}
+
 var FBPProcess = module.exports = function () {
   this._status = FBPProcessStatus.NOT_INITIALIZED;
   this.ownedIPs = 0;
   var fbpProcess = this;
 
   this.componentFiber = Fiber(function () {
-    fbpProcess.component.call(fbpProcess);
-    fbpProcess.setStatus(FBPProcessStatus.DORMANT);
+    try {
+      fbpProcess.component.call(fbpProcess);
+      fbpProcess.setStatus(FBPProcessStatus.DORMANT);
+    } catch (e) {
+      console.error("CAUGHT COMPONENT ERROR");
+      console.error("ERROR: %s", JSON.stringify(e, replaceErrors));
+      osProcess.send({
+        type: FBPProcessMessageType.ERROR,
+        details: e
+      });
+    }
   }.bind(this));
   console.log("FBPProcess created\n");
 
@@ -104,14 +127,32 @@ var FBPProcess = module.exports = function () {
 
     osProcess.on('message', function (message) {
       if (message.type === FBPProcessMessageType.ACTIVATION_REQUEST) {
-        fbpProcess.activate();
+        try {
+          fbpProcess.activate();
+        } catch (e) {
+          console.error("CAUGHT ACTIVATION ERROR");
+          console.error("ERROR: %s", JSON.stringify(e, replaceErrors));
+          osProcess.send({
+            type: FBPProcessMessageType.ERROR,
+            details: e
+          });
+        }
       }
     });
 
     osProcess.on('message', function (message) {
       if (message.type === FBPProcessMessageType.COMMENCE) {
         if (fbpProcess.selfStarting) {
-          fbpProcess.activate();
+          try {
+            fbpProcess.activate();
+          } catch (e) {
+            console.error("CAUGHT COMPONENT ERROR");
+            console.error("ERROR: %s", JSON.stringify(e, replaceErrors));
+            osProcess.send({
+              type: FBPProcessMessageType.ERROR,
+              details: e
+            });
+          }
         }
       }
     });

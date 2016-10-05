@@ -214,8 +214,8 @@ Network.prototype.sconnect = function (soutport, sinport, capacity) {
 Network.prototype.processIsSelfStarting = function (processName) {
   var connections = this.getProcessConnections(processName);
   var inputs = connections.in;
-  return _.some(inputs, function (inputDetails) {
-    return 'data' in inputDetails[0];
+  return !_.some(inputs, function (inputDetails) {
+    return 'process' in inputDetails[0];
   })
 };
 
@@ -229,6 +229,19 @@ Network.prototype.getContainer = function (processName) {
     return container.name === processName;
   });
 };
+
+
+function ProcessError(processName, error) {
+  this.message = 'Error from ' + processName + JSON.stringify(error);
+  this.stack = error.stack;
+  this.error = error;
+}
+Object.setPrototypeOf(ProcessError, Error);
+ProcessError.prototype = Object.create(Error.prototype);
+ProcessError.prototype.name = "ProcessError";
+ProcessError.prototype.message = "";
+ProcessError.prototype.constructor = ProcessError;
+
 
 Network.prototype.run = function (options, callback) {
   if (typeof options === 'function') {
@@ -260,6 +273,9 @@ Network.prototype.run = function (options, callback) {
       },
       callback
     );
+    container.on('error', function (e) {
+      callback(new ProcessError(container.name, e));
+    });
     container.on('statusChange', function (e) {
       console.log({
         old: FBPProcessStatus.__lookup(e.oldStatus),
@@ -269,6 +285,7 @@ Network.prototype.run = function (options, callback) {
       container.status = e.newStatus;
 
       var allInitialized = true;
+      console.log("*** STATUS UPDATE ***");
       _.forEach(network.processContainers, function (pc) {
         console.log({
           name: pc.name,

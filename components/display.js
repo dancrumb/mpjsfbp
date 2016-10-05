@@ -19,6 +19,10 @@ module.exports = function display() {
       console.log('CLOSE: ' + data);
     else
       console.log('data: ' + data);
-    outport.send(ip);
+    if (outport) {
+      outport.send(ip);
+    } else {
+      this.dropIP(ip);
+    }
   }
 };

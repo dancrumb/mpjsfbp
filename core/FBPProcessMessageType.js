@@ -9,5 +9,6 @@ module.exports = Enum([
   'IP_AVAILABLE',
   'STATUS_UPDATE',
   'ACTIVATION_REQUEST',
-  'COMMENCE'
+  'COMMENCE',
+  'ERROR'
 ]);

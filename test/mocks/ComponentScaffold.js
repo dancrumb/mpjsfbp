@@ -86,12 +86,15 @@ ComponentScaffold.prototype.openOutputPortArray = function (portName) {
     });
 };
 
-ComponentScaffold.prototype.openOutputPort = function (portName) {
-  const outport = this.outports[portName].port;
+ComponentScaffold.prototype.openOutputPort = function (portName, optional) {
+  const outport = this.outports[portName];
   if(!outport) {
-    console.error('Request for non-existent port: ' + portName);
+    if(optional !== 'OPTIONAL') {
+      console.error('Request for non-existent port: ' + portName);
+    }
+    return null;
   }
-  return outport;
+  return outport.port;
 };
 
 ComponentScaffold.prototype.dropIP = function(ip) {

@@ -17,6 +17,7 @@ var ProcessContainer = function (processDetails) {
   this.name = processDetails.name;
   this.status = FBPProcessStatus.NOT_INITIALIZED;
   this.process = fork(__dirname + '/FBPProcess.js');
+  this.activationSignalSent = false;
 
   this.process.on('error', function (e) {
     console.error('Process %s just died: %j', processDetails.name, e);
@@ -42,6 +43,9 @@ var ProcessContainer = function (processDetails) {
         newStatus: message.newStatus
       });
       this.status = message.newStatus;
+      if (this.status === FBPProcessStatus.ACTIVE) {
+        this.activationSignalSent = false;
+      }
     } else if (message.type === FBPProcessMessageType.IP_AVAILABLE) {
       var details = message.details;
       var connection = this.outgoingConnections[details.port];
@@ -54,7 +58,8 @@ var ProcessContainer = function (processDetails) {
       this.emit('ipAvailable', details);
     } else if (message.type === FBPProcessMessageType.IP_REQUESTED) {
       this.emit('ipRequested', message.details);
-
+    } else if (message.type === FBPProcessMessageType.ERROR) {
+      this.emit('error', message.details);
     } else {
       console.log('Unknown message: %j', message);
     }
@@ -109,8 +114,11 @@ ProcessContainer.prototype.requestIP = function (portName) {
 };
 
 ProcessContainer.prototype.signalIPAvailable = function () {
-  if (this.status === FBPProcessStatus.DORMANT || this.status === FBPProcessStatus.INITIALIZED) {
+  if (
+    (this.status === FBPProcessStatus.DORMANT || this.status === FBPProcessStatus.INITIALIZED) &&
+    !this.activationSignalSent) {
     console.log('Activiating %s due to incoming IP', this.name);
+    this.activationSignalSent = true;
     this.process.send({
       type: FBPProcessMessageType.ACTIVATION_REQUEST
     })
