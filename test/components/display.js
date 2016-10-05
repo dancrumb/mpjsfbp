@@ -18,6 +18,7 @@ describe('display', function () {
     scaffold.run(display);
     scaffold.verifyOutputs(expect);
     scaffold.verifyDroppedIPs(expect);
+    scaffold.ensureAllIPsAccountedFor(expect);
     scaffold.runTests(it);
   });
   it('displays and forwards any incoming IPs', function () {
@@ -35,6 +36,7 @@ describe('display', function () {
     scaffold.run(display);
     scaffold.verifyOutputs(expect);
     scaffold.verifyDroppedIPs(expect);
+    scaffold.ensureAllIPsAccountedFor(expect);
     scaffold.runTests(it);
   });
 });

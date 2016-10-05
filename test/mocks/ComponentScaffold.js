@@ -173,5 +173,20 @@ ComponentScaffold.prototype.runTests = function (it) {
   })
 };
 
+ComponentScaffold.prototype.ensureAllIPsAccountedFor = function (expect) {
+  var inIPs = _.reduce(this.inports, function (ips, inport) {
+    return ips.concat(inport.buffer);
+  }, []);
+  var outIPs = _.reduce(this.outports, function (ips, outport) {
+    return ips.concat(outport.expected);
+  }, this.droppedIPs.expected);
+
+  expect(outIPs.length).to.not.be.below(inIPs.length);
+  expect(outIPs).to.include.deep.members(inIPs);
+
+  console.log(inIPs);
+  console.log(outIPs);
+};
+
 
 module.exports = ComponentScaffold;

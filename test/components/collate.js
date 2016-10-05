@@ -26,6 +26,7 @@ describe('collate', function () {
     scaffold.run(collate);
     scaffold.verifyOutputs(expect);
     scaffold.verifyDroppedIPs(expect);
+    scaffold.ensureAllIPsAccountedFor(expect);
     scaffold.runTests(it);
   });
 });

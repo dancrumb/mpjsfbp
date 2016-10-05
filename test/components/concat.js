@@ -19,6 +19,7 @@ describe('concat', function () {
     scaffold.run(concat);
     scaffold.verifyOutputs(expect);
     scaffold.verifyDroppedIPs(expect);
+    scaffold.ensureAllIPsAccountedFor(expect);
     scaffold.runTests(it);
   });
 });
