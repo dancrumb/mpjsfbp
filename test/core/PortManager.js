@@ -2,7 +2,7 @@
  * Created by danrumney on 5/27/16.
  */
 
-var PortManager = require('../../core/PortManager');
+var PortManager = require('../../lib/core/PortManager');
 
 
 describe('PortManager', function() {
@@ -99,7 +99,7 @@ describe('PortManager', function() {
     expect(pm.openInputPort('OUT')).to.not.be.ok;
   });
 
-  it('allows you to add input ports', function () {
+  it('allows you to add output ports', function () {
     var pm = new PortManager('PROCESS');
     pm.addInputPort({portName : 'IN'});
     pm.addOutputPort({portName : 'OUT'});
@@ -107,7 +107,7 @@ describe('PortManager', function() {
     expect(pm.openOutputPort('OUT')).to.be.ok;
   });
 
-  it('defaults the process name to "UNKNOWN"', function () {
+  it('defaults the componentProvider name to "UNKNOWN"', function () {
     var pm = new PortManager();
     expect(pm.name).to.equal('UNKNOWN');
   })

@@ -1,5 +1,5 @@
 'use strict';
-var decomposer = require('../../components/decomposer');
+var decomposer = require('../../lib/components/decomposer');
 
 describe('decomposer', function () {
   it('generates multiple IPs from a single IIP containing an array of values', function () {

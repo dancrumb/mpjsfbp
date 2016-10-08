@@ -1,6 +1,6 @@
 'use strict';
 
-var display = require('../../components/display');
+var display = require('../../lib/components/display');
 
 describe('display', function () {
   it('displays any incoming IPs', function () {

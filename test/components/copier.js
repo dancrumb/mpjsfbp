@@ -1,5 +1,5 @@
 'use strict';
-var copier = require('../../components/copier');
+var copier = require('../../lib/components/copier');
 
 describe('copier', function () {
   it('should copy multiple IPs', function () {

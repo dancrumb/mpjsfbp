@@ -1,6 +1,6 @@
 'use strict';
 
-var breader = require('../../components/breader');
+var breader = require('../../lib/components/breader');
 var _ = require('lodash');
 var EOL = require('os').EOL;
 var eolBytes = _.invokeMap(EOL.split(''), 'charCodeAt', 0);

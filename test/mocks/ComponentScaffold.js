@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var IP = require('../../core/IP');
+var IP = require('../../lib/core/IP');
 var sync = require('synchronize');
 var PortScaffold = require('./PortScaffold');
 var RuntimeScaffold = require('./RuntimeScaffold');

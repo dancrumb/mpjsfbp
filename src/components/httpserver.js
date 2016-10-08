@@ -42,7 +42,7 @@ function handleServerRequest(req, res) {
 
 function genListenFun(runtime, server, portno) {
   return function (done) {
-    // In next tick (TODO use process.nextTick() instead):
+    // In next tick (TODO use componentProvider.nextTick() instead):
     setTimeout(function () {
       done();
     }, 0);

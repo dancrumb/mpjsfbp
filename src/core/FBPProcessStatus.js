@@ -1,4 +1,4 @@
-var Enum = require('./Enum');
+import Enum from './Enum';
 
 module.exports = Enum([
   'NOT_INITIALIZED',

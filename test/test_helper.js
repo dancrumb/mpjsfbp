@@ -2,7 +2,7 @@
 
 var chai = require('chai');
 var Fiber = require('fibers');
-var Process = require('../core/FBPProcess');
+var Process = require('../lib/core/ComponentProvider');
 
 global.expect = chai.expect;
 
@@ -11,7 +11,7 @@ global.ComponentScaffold = require('./mocks/ComponentScaffold');
 
 global.TestFiber = function(action) {
   Fiber(function() {
-    var mockProcess = new Process("test", function() {console.log("Test FBPProcess");});
+    var mockProcess = new Process("test", function() {console.log("Test ComponentProvider");});
 
     Fiber.current.fbpProc = mockProcess;
     action(mockProcess);

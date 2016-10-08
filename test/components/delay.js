@@ -1,6 +1,6 @@
 'use strict';
 
-var delay = require('../../components/delay');
+var delay = require('../../lib/components/delay');
 
 describe('delay', function () {
   it('should exactly delay a single IP', function (done) {

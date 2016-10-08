@@ -1,6 +1,6 @@
 'use strict';
 
-var repl = require('../../components/repl');
+var repl = require('../../lib/components/repl');
 
 describe('repl', function () {
   it('should replicate multiple IPs', function () {

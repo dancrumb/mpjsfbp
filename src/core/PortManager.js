@@ -45,7 +45,7 @@ function portOpener(ports, direction, name, opt) {
     return port;
   } else {
     if (direction === 'OUT' && opt != 'OPTIONAL') {
-      console.log('Port ' + this.name + '.' + name + ' not found');
+      console.log('Port ' + name + ' not found');
     }
     return null;
   }

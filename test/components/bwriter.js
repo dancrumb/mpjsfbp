@@ -1,6 +1,6 @@
 'use strict';
 
-var bwriter = require('../../components/bwriter');
+var bwriter = require('../../lib/components/bwriter');
 var fs = require('fs');
 var _ = require('lodash');
 

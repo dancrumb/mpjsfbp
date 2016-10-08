@@ -9,8 +9,8 @@ as a representation of the network connections
 
 ## Network Connections.
 
-Imagine a very simple network with process P with inports I,J and outport O, process R with outport O
-and process S with inport I.
+Imagine a very simple network with componentProvider P with inports I,J and outport O, componentProvider R with outport O
+and componentProvider S with inport I.
 
 We won't worry about the components at the moment.
 
@@ -25,17 +25,17 @@ This will translate to a JSON representation of:
 ```json
  {
   "R": {
-    "out": { "O": { "process": "P", "port": "I", "capacity": 20 } },
+    "out": { "O": { "componentProvider": "P", "port": "I", "capacity": 20 } },
     "in" :{}
   },
   "P": {
-    "out": { "O": { "process": "S", "port": "I", "capacity": 20 } },
-    "in": { "I": [ { "process": "R", "port": "O" } ], 
+    "out": { "O": { "componentProvider": "S", "port": "I", "capacity": 20 } },
+    "in": { "I": [ { "componentProvider": "R", "port": "O" } ], 
             "J": [ { "data": "foo" } ] }
   },
   "S": {
     "out": {},
-    "in": { "I": [ { "process": "P", "port": "O" } ] }
+    "in": { "I": [ { "componentProvider": "P", "port": "O" } ] }
   }
  }
  ```

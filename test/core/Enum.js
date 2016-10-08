@@ -1,4 +1,4 @@
-var Enum = require('../../core/Enum');
+var Enum = require('../../lib/core/Enum');
 
 describe('Enum', function () {
   it('should create an enum and provide a lookup function', function () {
@@ -15,11 +15,9 @@ describe('Enum', function () {
     var myEnum = Enum(['a']);
 
     var prevValue = myEnum.a;
-    myEnum.a = -1;
-    expect(myEnum.a).to.equal(prevValue);
+    expect(() => myEnum.a = -1 ).to.throw(Error);
 
     var prevLookupFunction = myEnum.__lookup;
-    myEnum.__lookup = 100;
-    expect(myEnum.__lookup).to.equal(prevLookupFunction);
+    expect(() => myEnum.__lookup = 100).to.throw(Error);
   });
 });

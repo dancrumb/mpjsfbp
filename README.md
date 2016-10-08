@@ -40,7 +40,7 @@ Test cases so far:
 # "Update" networks
 
 - `update`    -  "Update" run, demonstrating use of `collate.js` 
-- `update_c`  -  Same as `update.js` but routing output to a `compare` process, rather than to `display`
+- `update_c`  -  Same as `update.js` but routing output to a `compare` componentProvider, rather than to `display`
   
 The following diagram shows `update` and `update_c` in one diagram using the DrawFBP Enclosure function - this is not really a valid DrawFBP diagram, so no port names are shown:
 
@@ -68,7 +68,7 @@ These tests (except for `fbptestws`) can be run sequentially by running `fbptest
 - `concat`  - concatenates all the streams that are sent to its array input port (size determined in network definition) 
 - `copier`  - copies its input stream to its output stream
 - `copier_closing` - forces close of input port after 20 IPs
-- `copier_nonlooper` - same as `copier`, except that it is written as a non-looper (it has been modified to call the FBP services from lower in the process's stack)
+- `copier_nonlooper` - same as `copier`, except that it is written as a non-looper (it has been modified to call the FBP services from lower in the componentProvider's stack)
 - `discard` - discard (drop) all incoming IPs
 - `display` - display all incoming IPs, including bracket IPs
 - `gendata`  - sends as many IPs to its output port as are specified by its COUNT IIP (each just contains the current count)
@@ -98,7 +98,7 @@ Networks can be generated programmatically or by loading in an FBP file.
 1. Get access to JSFBP: `var fbp = require('fbp')`
 2. Create a new network: `var network = new fbp.Network();`
 3. Define your network:
- - Add processes: `network.defProc(...)`  Note: when several processes use the same component, `defProc` takes the process name as a second argument. 
+ - Add processes: `network.defProc(...)`  Note: when several processes use the same component, `defProc` takes the componentProvider name as a second argument. 
  - Connect output ports to input ports: `network.connect(...)`
  - Specify IIPs: `network.initialize(...)`
 4. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
@@ -130,7 +130,7 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 
 ### Useful methods
  
-- `Network#defProc(component[, name])` Creates a process from a component, defined by the first parameter.
+- `Network#defProc(component[, name])` Creates a componentProvider from a component, defined by the first parameter.
   
   - The first parameter can be a function or a string. When a string is used, the component is loaded according to three
   possiblities:
@@ -154,7 +154,7 @@ Component headers:
 
 In most cases you do not need to *require()* any JSFBP-related scripts or libraries as a 
 component developer. Everything you need is injected into the component's function as 
-its context `this` (the process object) and as a parameter (the runtime object).
+its context `this` (the componentProvider object) and as a parameter (the runtime object).
 
 Some utility functions are stored in `core/utils.js`. Import them if you really need them.
 You should generally refrain from accessing runtime-related code (e.g. Fibers) to ensure 

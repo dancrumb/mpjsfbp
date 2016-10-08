@@ -1,6 +1,6 @@
 'use strict';
 
-var discard = require('../../components/discard');
+var discard = require('../../lib/components/discard');
 
 describe('discard', function () {
   it('should discard a single IP', function () {

@@ -1,6 +1,6 @@
 'use strict';
 
-var randdelay = require('../../components/randdelay');
+var randdelay = require('../../lib/components/randdelay');
 
 describe('randdelay', function () {
   it('should randomly delay a single IP', function (done) {

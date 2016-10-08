@@ -1,6 +1,6 @@
 'use strict';
 
-var collate = require('../../components/collate');
+var collate = require('../../lib/components/collate');
 
 describe('collate', function () {
   it('should collate based on a single field', function () {

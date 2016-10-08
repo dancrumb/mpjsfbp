@@ -1,6 +1,6 @@
 'use strict';
 
-var concat = require('../../components/concat');
+var concat = require('../../lib/components/concat');
 
 describe('concat', function () {
   it('concatenates all incoming IPs to a single output port', function () {

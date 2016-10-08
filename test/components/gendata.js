@@ -1,6 +1,6 @@
 'use strict';
 
-var gendata = require('../../components/gendata');
+var gendata = require('../../lib/components/gendata');
 
 describe('gendata', function () {
   it('generates incrementing IPs according to the IN port', function () {

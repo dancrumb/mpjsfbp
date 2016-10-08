@@ -1,4 +1,4 @@
-var Network = require('../../core/Network');
+var Network = require('../../lib/core/Network');
 var fs = require('fs');
 
 describe('Network', function () {
@@ -6,7 +6,7 @@ describe('Network', function () {
     var network = new Network();
     var process = network.defineProcess('./components/copier.js', 'copier');
 
-    expect(process.location).to.have.a.property('moduleLocation').and.to.contain('jsfbp/components/copier.js');
+    expect(process.location).to.have.a.property('moduleLocation').and.to.contain('jsfbp/lib/components/copier.js');
   });
 
   it('can load FBP components from this module\'s core via package/component', function () {
@@ -32,7 +32,7 @@ describe('Network', function () {
   });
 
   it.skip('can be created from an FBP file', function (done) {
-    this.timeout(10000);
+    this.timeout(3000);
 
     fs.readFile(__dirname + '/network.fbp', 'utf8', function (err, graph) {
       if (err) {
@@ -96,7 +96,7 @@ describe('Network', function () {
     }).to.throw(Error);
   });
 
-  it('requires FBPProcess to be given a name', function () {
+  it('requires ComponentProvider to be given a name', function () {
     var network = new Network();
     expect(function () {
       network.defineProcess('./componenent/copier.js');

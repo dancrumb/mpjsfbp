@@ -1,4 +1,4 @@
-var Enum = require('./Enum');
+import Enum from './Enum';
 
 module.exports = Enum([
   'IP_ACCEPTED',
@@ -10,5 +10,7 @@ module.exports = Enum([
   'STATUS_UPDATE',
   'ACTIVATION_REQUEST',
   'COMMENCE',
+  'PORT_CLOSURE',
+  'PROCESS_COMPLETING',
   'ERROR'
 ]);

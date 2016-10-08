@@ -7,3 +7,4 @@ examples/data/text_new.txt
 examples/isolate-*-v8.log
 
 coverage/
+lib/
