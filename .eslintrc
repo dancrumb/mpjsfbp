@@ -1,15 +1,16 @@
 {
+  "ecmaVersion": 6,
   "parserOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "impliedStrict": true,
-      "modules": true
-    },
-    "root" :true
+    "sourceType": "module"
   },
+  "ecmaFeatures": {
+    "impliedStrict": true,
+    "modules": true
+  },
+  "root": true,
   "env": {
-    "node": true
+    "node": true,
+    "es6": true
   },
   "extends": [
     "es2015/node"
