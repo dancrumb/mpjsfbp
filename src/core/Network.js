@@ -133,6 +133,10 @@ class Network {
     }
   }
 
+  defProc() {
+    return this.defineProcess.apply(this, arguments);
+  }
+
   /**
    *
    * @param processName

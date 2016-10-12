@@ -1,4 +1,4 @@
-var fbp = require('..')
+var fbp = require('../src')
   , path = require('path');
 
 // --- define network ---
@@ -19,5 +19,5 @@ network.connect(copier, 'OUT', rrmerge, 'IN[1]', 2);
 network.connect(rrmerge, 'OUT', recvr, 'IN', 2);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

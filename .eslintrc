@@ -1,9 +1,10 @@
 {
   "parserOptions": {
-    "ecmaVersion": 5,
+    "ecmaVersion": 6,
     "sourceType": "module",
     "ecmaFeatures": {
-      "impliedStrict": true
+      "impliedStrict": true,
+      "modules": true
     },
     "root" :true
   },

@@ -1,11 +1,11 @@
-var fbp = require('..');
+var fbp = require('../src/');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
-network.defProc('./examples/components/gendata.js', 'Gen');
-network.defProc('./components/copier.js', 'Copy');
-network.defProc('./components/recvr.js', 'Recvr');
+network.defProc('/components/gendata.js', 'Gen');
+network.defProc('jsfbp/copier', 'Copy');
+network.defProc('jsfbp/recvr', 'Recvr');
 
 //network.initialize(gendata, 'COUNT', '2000');
 //network.connect(gendata, 'OUT', copier, 'IN', 5);
@@ -16,5 +16,5 @@ network.sconnect('Gen.OUT', 'Copy.IN', 5);
 network.sconnect('Copy.OUT', 'Recvr.IN', 5);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

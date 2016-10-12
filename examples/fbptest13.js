@@ -1,4 +1,4 @@
-var fbp = require('..');
+var fbp = require('../src');
 
 // --- define network ---
 var network = new fbp.Network();
@@ -13,5 +13,5 @@ network.connect(gendata, 'OUT', randdelay, 'IN', 5);
 network.connect(randdelay, 'OUT', recvr, 'IN', 5);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

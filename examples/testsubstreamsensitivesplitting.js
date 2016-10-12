@@ -1,6 +1,6 @@
 // testsubstreamsensitivesplitting.js
 
-var fbp = require('..');
+var fbp = require('../src');
 
 // this network is to test interaction between lbal (Load balancer) and substreams -
 // the substreams may be rearranged, but within a substreams the IPs must preserve their
@@ -62,5 +62,5 @@ else {
 
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

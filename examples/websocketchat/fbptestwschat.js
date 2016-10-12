@@ -13,5 +13,5 @@ network.connect(receiver, 'OUT', simproc, 'IN', 6);
 network.connect(simproc, 'OUT', send, 'IN', 6);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: true});
+
+network.run({trace: true});

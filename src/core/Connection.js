@@ -84,8 +84,6 @@ class Connection extends EventEmitter {
 
     const connectionContents = this.contents;
 
-    //TODO: Signal that IP is available to downstream process
-
     var ipEnqueuer = () => {
       console.log("Enqueuing %j", ip);
       connectionContents.enqueue(ip);

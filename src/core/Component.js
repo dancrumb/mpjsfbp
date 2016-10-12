@@ -181,7 +181,7 @@ class Component extends PortManager {
   dropIP(ip) {
     let cont = ip.contents;
     if (ip.type != this.IPTypes.NORMAL) {
-      cont = `${this.IPTypes.__lookup(ip.type)}, ${cont}`;
+      cont = `${ip.type.name}, ${cont}`;
     }
   }
 

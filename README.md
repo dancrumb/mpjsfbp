@@ -101,11 +101,10 @@ Networks can be generated programmatically or by loading in an FBP file.
  - Add processes: `network.defProc(...)`  Note: when several processes use the same component, `defProc` takes the componentProvider name as a second argument. 
  - Connect output ports to input ports: `network.connect(...)`
  - Specify IIPs: `network.initialize(...)`
-4. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
-5. Run it!
+4. Run it!
  
 ```
-network.run(fiberRuntime, {trace: true/false}, function success() {
+network.run({trace: true/false}, function success() {
     console.log("Finished!");
   });
 ```
@@ -120,7 +119,7 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 5. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
 6. Run it!
 ```
-network.run(fiberRuntime, {trace: true/false}, function success() {
+network.run({trace: true/false}, function success() {
     console.log("Finished!");
   });
 ```
