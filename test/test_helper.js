@@ -1,17 +1,20 @@
-'use strict';
+import chai from 'chai';
+import Fiber from 'fibers';
+import Process from '../src/core/Component';
+import sinon from "sinon";
+import sinonChai from "sinon-chai";
+chai.use(sinonChai);
 
-var chai = require('chai');
-var Fiber = require('fibers');
-var Process = require('../lib/core/ComponentProvider');
 
 global.expect = chai.expect;
+global.sinon = sinon;
 
 global.ComponentScaffold = require('./mocks/ComponentScaffold');
 
 
-global.TestFiber = function(action) {
-  Fiber(function() {
-    var mockProcess = new Process("test", function() {console.log("Test ComponentProvider");});
+global.TestFiber = action => {
+  Fiber(() => {
+    const mockProcess = new Process("test", () => {console.log("Test Component");});
 
     Fiber.current.fbpProc = mockProcess;
     action(mockProcess);
@@ -35,8 +38,8 @@ global.TestFiber = function(action) {
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-chai.use(function (chai) {
-  var Assertion = chai.Assertion;
+chai.use(chai => {
+  const Assertion = chai.Assertion;
 
   function compareArrays(assertionContext, expectedArray, valueArray) {
     assertionContext.assert(
@@ -47,9 +50,9 @@ chai.use(function (chai) {
       valueArray
     );
 
-    for (var propertyIndex = 0; propertyIndex < expectedArray.length; propertyIndex++) {
-      var valueArrayItem = valueArray[propertyIndex];
-      var expectedArrayItem = expectedArray[propertyIndex];
+    for (let propertyIndex = 0; propertyIndex < expectedArray.length; propertyIndex++) {
+      const valueArrayItem = valueArray[propertyIndex];
+      const expectedArrayItem = expectedArray[propertyIndex];
 
       if (Object.prototype.toString.call(valueArrayItem) === "[object Array]") {
         compareArrays(assertionContext, expectedArrayItem, valueArrayItem);
@@ -70,11 +73,11 @@ chai.use(function (chai) {
   }
 
   function compareObjects(assertionContext, expected, value) {
-    for (var expectedPropertyName in expected) {
+    for (const expectedPropertyName in expected) {
       if (expected.hasOwnProperty(expectedPropertyName)) {
-        var expectedProperty = expected[expectedPropertyName];
+        const expectedProperty = expected[expectedPropertyName];
 
-        var valueHasProperty = value.hasOwnProperty(expectedPropertyName);
+        const valueHasProperty = value.hasOwnProperty(expectedPropertyName);
 
         assertionContext.assert(
           valueHasProperty,
@@ -84,7 +87,7 @@ chai.use(function (chai) {
         );
 
         if (valueHasProperty) {
-          var valueProperty = value[expectedPropertyName];
+          const valueProperty = value[expectedPropertyName];
 
           if (Object.prototype.toString.call(valueProperty) === "[object Array]") {
             compareArrays(assertionContext, expectedProperty, valueProperty);
@@ -107,7 +110,7 @@ chai.use(function (chai) {
   }
 
   Assertion.addMethod("equalPropertiesOn", function (expected) {
-    var value = this._obj;
+    const value = this._obj;
 
     compareObjects(this, expected, value);
   });

@@ -1,14 +1,12 @@
 var _ = require('lodash');
 
-var PortManager = function (processName, ports) {
+var PortManager = function (ports) {
   this.inports = {};
   this.outports = {};
   if (ports) {
     _.forEach(ports.inports, this.addInputPort.bind(this));
     _.forEach(ports.outports, this.addOutputPort.bind(this));
   }
-
-  this.name = processName || 'UNKNOWN';
 };
 
 PortManager.prototype.addInputPort = function (port) {
@@ -22,7 +20,7 @@ PortManager.prototype.addOutputPort = function (port) {
  * Given a set of ports an a base name ABC, returns all the ports in the set that
  * have the name ABC[<index>]
  */
-function getPortArray(ports, processName, portName) {
+function getPortArray(ports, portName) {
   var re = new RegExp(portName + '\\[\\d+\\]');
   var portFilter = re.test.bind(re);
 
@@ -32,7 +30,7 @@ function getPortArray(ports, processName, portName) {
     .map(_.partial(portOpener, ports, ''));
 
   if (portArray.length === 0) {
-    console.log('Port ' + processName + '.' + portName + ' not found');
+    console.log('Port ' + portName + ' not found');
     return null;
   }
 
@@ -56,7 +54,7 @@ PortManager.prototype.openInputPort = function (name) {
 };
 
 PortManager.prototype.openInputPortArray = function (name) {
-  return getPortArray(this.inports, this.name, name);
+  return getPortArray(this.inports, name);
 };
 
 PortManager.prototype.openOutputPort = function (name, opt) {
@@ -64,7 +62,7 @@ PortManager.prototype.openOutputPort = function (name, opt) {
 };
 
 PortManager.prototype.openOutputPortArray = function (name) {
-  return getPortArray(this.outports, this.name, name);
+  return getPortArray(this.outports, name);
 };
 
 PortManager.prototype.toString = function () {

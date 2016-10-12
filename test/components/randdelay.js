@@ -1,14 +1,12 @@
-'use strict';
+import randdelay from '../../src/components/randdelay';
 
-var randdelay = require('../../lib/components/randdelay');
-
-describe('randdelay', function () {
+describe('randdelay', () => {
   it('should randomly delay a single IP', function (done) {
-    var DELAY = 500;
-    var DELAY_MAX_DIFF = 150;
+    const DELAY = 500;
+    const DELAY_MAX_DIFF = 150;
     this.timeout(DELAY + DELAY_MAX_DIFF);
 
-    var scaffold = new ComponentScaffold({
+    const scaffold = new ComponentScaffold({
         iips: {
           'INTVL': DELAY
         },
@@ -23,13 +21,13 @@ describe('randdelay', function () {
     );
 
 
-    var startTime = Date.now();
-    scaffold.run(randdelay, function () {
+    const startTime = Date.now();
+    scaffold.run(randdelay, () => {
       scaffold.verifyOutputs(expect);
       scaffold.verifyDroppedIPs(expect);
       scaffold.runTests(it);
 
-      var diffTime = Date.now() - startTime;
+      const diffTime = Date.now() - startTime;
       expect(Math.abs(diffTime - DELAY)).to.be.below(DELAY);
 
       done();
@@ -37,12 +35,12 @@ describe('randdelay', function () {
   });
 
   it('should randomly delay multiple IPs', function (done) {
-    var DELAY = 500;
-    var DELAY_MAX_DIFF = 300;
-    var DELAY_TOTAL = DELAY * 5;
+    const DELAY = 500;
+    const DELAY_MAX_DIFF = 300;
+    const DELAY_TOTAL = DELAY * 5;
     this.timeout(DELAY_TOTAL + DELAY_MAX_DIFF);
 
-    var scaffold = new ComponentScaffold({
+    const scaffold = new ComponentScaffold({
         iips: {
           'INTVL': DELAY
         },
@@ -57,13 +55,13 @@ describe('randdelay', function () {
     );
 
 
-    var startTime = Date.now();
-    scaffold.run(randdelay, function () {
+    const startTime = Date.now();
+    scaffold.run(randdelay, () => {
       scaffold.verifyOutputs(expect);
       scaffold.verifyDroppedIPs(expect);
       scaffold.runTests(it);
 
-      var diffTime = Date.now() - startTime;
+      const diffTime = Date.now() - startTime;
       expect(Math.abs(diffTime - DELAY_TOTAL)).to.be.below(DELAY_TOTAL);
 
       done();

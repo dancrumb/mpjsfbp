@@ -1,10 +1,8 @@
-'use strict';
+import repl from '../../src/components/repl';
 
-var repl = require('../../lib/components/repl');
-
-describe('repl', function () {
-  it('should replicate multiple IPs', function () {
-    var scaffold = new ComponentScaffold({
+describe('repl', () => {
+  it('should replicate multiple IPs', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: [1, 2, 3, 4, 5]
         },
@@ -22,8 +20,8 @@ describe('repl', function () {
     scaffold.runTests(it);
   });
 
-  it('should replicate brackets', function () {
-    var scaffold = new ComponentScaffold({
+  it('should replicate brackets', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: [ComponentScaffold.openIP(), 7, 6, 5, ComponentScaffold.closeIP()]
         },

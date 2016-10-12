@@ -1,10 +1,8 @@
-'use strict';
+import discard from '../../src/components/discard';
 
-var discard = require('../../lib/components/discard');
-
-describe('discard', function () {
-  it('should discard a single IP', function () {
-    var scaffold = new ComponentScaffold({
+describe('discard', () => {
+  it('should discard a single IP', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: [1, 2, 3, 4]
         },

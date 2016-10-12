@@ -1,15 +1,16 @@
 'use strict';
 
-var breader = require('../../lib/components/breader');
-var _ = require('lodash');
-var EOL = require('os').EOL;
-var eolBytes = _.invokeMap(EOL.split(''), 'charCodeAt', 0);
+import breader  from '../../src/components/breader';
+import _ from 'lodash';
+import {EOL}  from 'os';
+
+const eolBytes = _.invokeMap(EOL.split(''), 'charCodeAt', 0);
 
 
 describe('breader', function () {
 
-  it('should read a file and output its contents as bytes', function (done) {
-    var scaffold = new ComponentScaffold({
+  it('should read a file and output its contents as bytes', (done) =>  {
+    const scaffold = new ComponentScaffold({
         iips: {
           'FILE': __dirname + '/hello-world.txt'
         },
@@ -29,8 +30,8 @@ describe('breader', function () {
     });
   });
 
-  it('supports setting chunk sizes', function (done) {
-    var scaffold = new ComponentScaffold({
+  it('supports setting chunk sizes', (done) => {
+    const scaffold = new ComponentScaffold({
         iips: {
           'FILE': __dirname + '/hello-world.txt',
           'SIZE': 100

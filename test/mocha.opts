@@ -1,7 +1,0 @@
---ui mocha-fibers
---recursive
--R spec
---compilers js:babel-register
---require test/test_helper.js
-test/components
-test/core

@@ -1,11 +1,9 @@
-'use strict';
+import gendata from '../../src/components/gendata';
 
-var gendata = require('../../lib/components/gendata');
-
-describe('gendata', function () {
-  it('generates incrementing IPs according to the IN port', function () {
-    var scaffold = new ComponentScaffold({
-      inports: {
+describe('gendata', () => {
+  it('generates incrementing IPs according to the IN port', () => {
+    const scaffold = new ComponentScaffold({
+        inports: {
           'IN': [9]
         },
         outports: {

@@ -7,7 +7,7 @@ import ProcessConnection from './ProcessConnection';
 import IIPConnection from './IIPConnection';
 
 /*
- _connections Definition for componentProvider P with inports I,J and outport O
+ _connections Definition for component P with inports I,J and outport O
  Remote processes are R and S
  IIP into P.J
 
@@ -17,21 +17,28 @@ import IIPConnection from './IIPConnection';
 
  {
  R: {
- out: { O: { componentProvider: 'P', port: 'I', capacity: 20 } },
+ out: { O: { component: 'P', port: 'I', capacity: 20 } },
  in :{}
  },
  P: {
- out: { O: { componentProvider: 'S', port: 'I' } },
- in: { I: [ { componentProvider: 'R', port: 'O' } ], J: [ { data: 'foo' } ] }
+ out: { O: { component: 'S', port: 'I' } },
+ in: { I: [ { component: 'R', port: 'O' } ], J: [ { data: 'foo' } ] }
  },
  S: {
  out: {},
- in: { I: [ { componentProvider: 'P', port: 'O' } ] }
+ in: { I: [ { component: 'P', port: 'O' } ] }
  }
  }
  */
 
+/**
+ *
+ */
 class Network {
+  /**
+   *
+   * @param options
+   */
   constructor(options) {
     this._processes = {};
 
@@ -41,6 +48,12 @@ class Network {
     }
   }
 
+  /**
+   *
+   * @param graphString
+   * @param localRoot
+   * @returns {Network}
+   */
   static createFromGraph(graphString, localRoot) {
     const graphDefinition = parseFBP(graphString, {
       caseSensitive: true
@@ -68,7 +81,7 @@ class Network {
   }
 
   /**
-   * Given a `processName`, this returns an object that describes the connections to and from the process
+   * Given a `process`, this returns an object that describes the connections to and from the process
    * @param {string} processName
    * @returns {*}
    */
@@ -86,6 +99,12 @@ class Network {
     return this._connections[processName];
   }
 
+  /**
+   *
+   * @param fbpProcess
+   * @param portName
+   * @param string
+   */
   initialize(fbpProcess, portName, string) {
     const processName = (typeof fbpProcess === "string") ? fbpProcess : fbpProcess.name;
     attachInputToProcess(this, processName, portName, {
@@ -93,6 +112,12 @@ class Network {
     });
   }
 
+  /**
+   *
+   * @param moduleName
+   * @param name
+   * @returns {*}
+   */
   defineProcess(moduleName, name) {
     if (!name) {
       throw new Error(`No name passed to defineProcess:${moduleName}`);
@@ -108,14 +133,28 @@ class Network {
     }
   }
 
+  /**
+   *
+   * @param processName
+   * @returns {*}
+   */
   getProcessByName(processName) {
     return this._processes[processName];
   }
 
+  /**
+   *
+   * @returns {Array}
+   */
   getProcessList() {
     return _.keys(this._processes);
   }
 
+  /**
+   *
+   * @param processName
+   * @returns {{in, out}}
+   */
   getProcessPortNames(processName) {
     const connections = this.getProcessConnections(processName);
     return { in: _.keys(connections.in),
@@ -123,6 +162,14 @@ class Network {
     }
   }
 
+  /**
+   *
+   * @param upstreamProcess
+   * @param upstreamPortName
+   * @param downstreamProcess
+   * @param downstreamPortName
+   * @param capacity
+   */
   connect(
     upstreamProcess,
     upstreamPortName,
@@ -150,12 +197,23 @@ class Network {
     };
   }
 
+  /**
+   *
+   * @param sinport
+   * @param string
+   */
   sinitialize(sinport, string) {
     const other = getPortInfo.call(this, sinport);
 
     this.initialize(other.proc, other.port, string);
   }
 
+  /**
+   *
+   * @param soutport
+   * @param sinport
+   * @param capacity
+   */
   sconnect(soutport, sinport, capacity) {
     const up = getPortInfo.call(this, soutport);
     const down = getPortInfo.call(this, sinport);
@@ -163,26 +221,52 @@ class Network {
     this.connect(up.proc, up.port, down.proc, down.port, capacity);
   }
 
+  /**
+   *
+   * @param processName
+   * @returns {boolean}
+   */
   processIsSelfStarting(processName) {
     const connections = this.getProcessConnections(processName);
     const inputs = connections.in;
     return !_.some(inputs, inputDetails => 'process' in inputDetails[0])
   }
 
+  /**
+   *
+   * @param processName
+   * @param portName
+   * @returns {*}
+   */
   processPortHasData(processName, portName) {
     const container = this.getContainer(processName);
     return container.portHasData(portName);
   }
 
+  /**
+   *
+   * @param processName
+   * @param portName
+   * @returns {*}
+   */
   processPortIsOpen(processName, portName) {
     const container = this.getContainer(processName);
     return container.portIsOpen(portName);
   }
 
+  /**
+   *
+   * @param processName
+   */
   getContainer(processName) {
     return _.find(this.processes, container => container.name === processName);
   }
 
+  /**
+   *
+   * @param [options] {object}
+   * @param callback {function}
+   */
   run(options, callback) {
     if (typeof options === 'function') {
       callback = options;
@@ -199,54 +283,51 @@ class Network {
       const ports = network.getProcessPortNames(processName);
 
       const fbpProcess = new FBPProcess({
-          name: processName,
-          component: details.location,
-          in: ports.in,
-          out: ports.out,
-          selfStarting: network.processIsSelfStarting(processName)
-        },
-        callback
-      );
+        name: processName,
+        component: details.location,
+        in: ports.in,
+        out: ports.out
+      });
 
       fbpProcess.on('error', e => {
         callback(new ProcessError(fbpProcess.name, e));
       });
 
       fbpProcess.on('statusChange', e => {
-        console.log({
-          old: FBPProcessStatus.__lookup(e.oldStatus),
-          new: FBPProcessStatus.__lookup(e.newStatus),
-          name: e.name
-        });
+        console.log(`{ "type": "statusChange", "newStatus": "${e.newStatus.name}", "name": "${e.name}" }`);
         fbpProcess.status = e.newStatus;
 
         let allInitialized = true;
-        console.log("*** STATUS UPDATE ***");
+        let allDone = true;
         _.forEach(network.processes, processContainer => {
-          console.log(`${processContainer.name}: ${FBPProcessStatus.__lookup(processContainer.status)}`);
-          allInitialized = allInitialized && processContainer.status === FBPProcessStatus.INITIALIZED;
+          console.log(`{ "type": "statusCheck", "name": "${processContainer.name}", "status": "${processContainer.status.name}"}`);
+          allInitialized = allInitialized && processContainer.status.name === FBPProcessStatus.INITIALIZED.name;
+          allDone = allDone && processContainer.status.name === FBPProcessStatus.DONE.name;
         });
-        console.log("*********************");
 
         if (allInitialized) {
+          console.log(`{ "type": "networkMessage", "message": "All processes initialized - time to commence"}`);
           _.forEach(network.processes, pc => {
             pc.commence();
           });
+        }
 
+        if (allDone) {
+          _.forEach(network.processes, (process) => process.terminate());
+          callback();
         }
       });
 
 
       fbpProcess.on('processDormant', () => {
-        const openPorts = network.router.processHasOpenInports(fbpProcess.name, ports.in);
-        console.log("Process Dormant: %s, %s", fbpProcess.name, openPorts);
-        if (!openPorts) {
+        var readyForShutdown = fbpProcess.isReadyForShutdown();
+        console.log("Process Dormant: %s, %s", fbpProcess.name, readyForShutdown);
+        if (readyForShutdown) {
           fbpProcess.shutdownProcess();
         }
       });
-      fbpProcess.on('portClosure', e => {
-        network.router.closePort(e);
-      });
+
+
       processes[processName] = fbpProcess;
       return processes;
     }, {});
@@ -268,6 +349,8 @@ class Network {
         })
       });
     });
+
+    _.invokeMap(this.processes, 'initialize');
 
   }
 }
@@ -328,6 +411,9 @@ function getPortInfo(sinport) {
 }
 
 
+/**
+ * @extends Error
+ */
 class ProcessError extends Error {
   constructor(processName, error) {
     super();

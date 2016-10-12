@@ -2,33 +2,158 @@ import FIFO from './FIFO';
 import {
   EventEmitter
 } from 'events';
+import IP from './IP';
 
+/**
+ *
+ */
 class Connection extends EventEmitter {
-  constructor() {
+  /**
+   *
+   * @param size
+   */
+  constructor(size) {
     super();
     this.closed = false;
+
+    this.capacity = size;
     this.contents = new FIFO();
+
+    this.contents.on('fifoValueAdded', () => {
+      this.emit('ipAvailable');
+      this.emit('ipAccepted');
+    });
+    this.contents.on('fifoEmpty', () => {
+      if (this.closed) {
+        this.emit('connectionCompleted');
+      }
+    });
   }
 
+  /**
+   * Checks whether this connection could potentially send a process-activating IP
+   * @returns {boolean}
+   */
+  couldActivateAProcess() {
+    return this.couldSendData()
+  }
+
+  /**
+   * Checks whether this connection could send an IP right now or potentially in the future
+   * @returns {boolean}
+   */
+  couldSendData() {
+    return this.isOpen() || !this.contents.isEmpty();
+  }
+
+  /**
+   *
+   * @param callback
+   */
+  getIP(callback) {
+    const dequeuer = () => {
+      const ip = this.contents.dequeue();
+      this.contents.removeListener('fifoNoLongerEmpty', dequeuer);
+      this.contents.removeListener('connectionCompleted', dequeuer);
+      console.log(`{ "type": "ipDequeue", "ip": ${ip}}`);
+      callback(null, ip);
+    };
+    console.log(`{ "type": "connectionState", "contents": ${JSON.stringify(this.contents.queue)}, "cursor": ${this.contents.cursor}, "length": ${this.contents.length}}`);
+    if (!this.couldSendData()) {
+      console.log(`{ "type": "getIPResolution", "resolution": "dataDepleted"}`);
+      callback(null, null)
+    } else if (this.hasData()) {
+      console.log(`{ "type": "getIPResolution", "resolution": "dataAvailable"}`);
+      process.nextTick(dequeuer);
+    } else {
+      console.log(`{ "type": "getIPResolution", "resolution": "waitingForData"}`);
+      this.contents.once('fifoNoLongerEmpty', dequeuer);
+      this.once('connectionCompleted', dequeuer);
+    }
+  }
+
+  /**
+   *
+   * @param {IP} ip
+   * @param {function} callback
+   */
+  putIP(ip, callback) {
+    if (this.closed) {
+      callback(new Error("Tried to put an IP into a closed connection"));
+    }
+
+    const connectionContents = this.contents;
+
+    //TODO: Signal that IP is available to downstream process
+
+    var ipEnqueuer = () => {
+      console.log("Enqueuing %j", ip);
+      connectionContents.enqueue(ip);
+      callback();
+    };
+
+    if (connectionContents.length >= this.capacity) {
+      connectionContents.once('fifoValueRemoved', ipEnqueuer);
+    } else {
+      process.nextTick(ipEnqueuer);
+    }
+  }
+
+  /**
+   * Checks whether this connection is open
+   * @returns {boolean}
+   */
   isOpen() {
     return !this.closed;
   }
 
+  /**
+   * Closes this connection
+   *
+   * @fires Connection#connectionClosed
+   * @fires Connection#connectionCompleted
+   */
   close() {
+    console.log(`{ "type": "closingConnection", "ips": ${this.pendingIPCount()}}`);
     this.closed = true;
+    this.emit('connectionClosed');
+    if (this.contents.isEmpty()) {
+      this.emit('connectionCompleted');
+    }
   }
 
+  /**
+   * Checks whether there are IPs in this connection
+   * @returns {boolean}
+   */
   hasData() {
     return !this.contents.isEmpty();
   }
 
+  /**
+   * Clears the connection of all IPs
+   */
   purgeData() {
-    this.contents = new FIFO();
+    this.contents.reset();
   }
 
+  /**
+   *
+   * @returns {number} The number of IPs not yet cleared from this connection
+   */
   pendingIPCount() {
     return this.contents.length;
   }
 }
 
 export default Connection;
+
+
+/**
+ * Indicates that a Connection has closed. However, it is possible that it still contains data, waiting to drain
+ * @event Connection#connectionClosed
+ */
+/**
+ * Indicates that a Connection is completed, meaning that it is closed and it has no more data to provide
+ * @event Connection#connectionCompleted
+ */

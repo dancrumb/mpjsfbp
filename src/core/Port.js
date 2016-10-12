@@ -2,12 +2,20 @@ import {
   EventEmitter
 } from 'events';
 
+/**
+ * @extends EventEmitter
+ */
 class Port extends EventEmitter {
-  constructor(process, portName) {
+  /**
+   *
+   * @param component {Component}
+   * @param portName {string}
+   */
+  constructor(component, portName) {
     super();
-    if (process) {
-      this.processName = process.name;
-      this.componentProvider = process;
+    if (component) {
+      this.processName = component.name;
+      this.component = component;
     } else {
       this.processName = '';
     }
@@ -15,14 +23,26 @@ class Port extends EventEmitter {
     this.closed = false;
   }
 
+  /**
+   *
+   * @returns {string}
+   */
   get name() {
     return this.portName;
   }
 
+  /**
+   *
+   * @returns {boolean}
+   */
   isOpen() {
     return !this.closed;
   }
 
+  /**
+   *
+   * @fires Port#portClosed
+   */
   close() {
     if (!this.closed) {
       this.closed = true;
@@ -30,6 +50,5 @@ class Port extends EventEmitter {
     }
   }
 }
-
 
 export default Port;

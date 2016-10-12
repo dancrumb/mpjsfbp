@@ -1,32 +1,32 @@
-var fs = require('fs');
+import fs from 'fs';
 
 function makeFBPFSCallback(fsFunction, path, flags) {
-  return function (done) {
-    fs[fsFunction].call(fs, path, flags, function (err, fd) {
+  return done => {
+    fs[fsFunction].call(fs, path, flags, (err, fd) => {
       done([err, fd]);
     });
   }
 }
 
-module.exports = {
-  getChunkSize: function (defaultSize) {
-    var size = defaultSize || 1;
-    var sizePort = this.openInputPort('SIZE');
-    if (sizePort) {
-      var sizeIP = sizePort.receive();
-      if (sizeIP) {
-        size = parseInt(sizeIP.contents, 10);
+export default {
+  getChunkSize(defaultSize) {
+      let size = defaultSize || 1;
+      const sizePort = this.openInputPort('SIZE');
+      if (sizePort) {
+        const sizeIP = sizePort.receive();
+        if (sizeIP) {
+          size = parseInt(sizeIP.contents, 10);
+        }
+        this.dropIP(sizeIP);
       }
-      this.dropIP(sizeIP);
+      return size;
+    },
+
+    openFile(path, flags) {
+      return makeFBPFSCallback('open', path, flags);
+    },
+
+    readFile(path, flags) {
+      return makeFBPFSCallback('read', path, flags);
     }
-    return size;
-  },
-
-  openFile: function (path, flags) {
-    return makeFBPFSCallback('open', path, flags);
-  },
-
-  readFile: function (path, flags) {
-    return makeFBPFSCallback('read', path, flags);
-  }
 };

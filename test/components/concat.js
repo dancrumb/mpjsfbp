@@ -1,10 +1,8 @@
-'use strict';
+import concat from '../../src/components/concat';
 
-var concat = require('../../lib/components/concat');
-
-describe('concat', function () {
-  it('concatenates all incoming IPs to a single output port', function () {
-    var scaffold = new ComponentScaffold({
+describe('concat', () => {
+  it('concatenates all incoming IPs to a single output port', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           'IN[0]': [1, 2, 3],
           'IN[1]': [4, 5, 6]

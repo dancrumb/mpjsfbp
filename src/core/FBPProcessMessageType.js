@@ -1,16 +1,25 @@
-import Enum from './Enum';
+import {
+  Enum
+} from 'enumify';
 
-module.exports = Enum([
+class FBPProcessMessageType extends Enum {}
+
+
+FBPProcessMessageType.initEnum([
   'IP_ACCEPTED',
   'IP_INBOUND',
-  'IIP_INBOUND',
+  'EOS_INBOUND',
   'INITIALIZE',
+  'INITIALIZATION_COMPLETE',
+  'COMPONENT_COMPLETE',
   'IP_REQUESTED',
   'IP_AVAILABLE',
-  'STATUS_UPDATE',
   'ACTIVATION_REQUEST',
   'COMMENCE',
   'PORT_CLOSURE',
   'PROCESS_COMPLETING',
+  'SHUTDOWN_PROCESS',
   'ERROR'
 ]);
+
+export default FBPProcessMessageType;

@@ -1,10 +1,8 @@
-'use strict';
+import collate from '../../src/components/collate';
 
-var collate = require('../../lib/components/collate');
-
-describe('collate', function () {
-  it('should collate based on a single field', function () {
-    var scaffold = new ComponentScaffold({
+describe('collate', () => {
+  it('should collate based on a single field', () => {
+    const scaffold = new ComponentScaffold({
         iips: {
           'CTLFIELDS': '1'
         },

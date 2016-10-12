@@ -2,15 +2,23 @@ import {
   EventEmitter
 } from 'events';
 
+/**
+ * FIFO queue implementation
+ */
 class FIFO extends EventEmitter {
   constructor() {
     super();
 
-    this.queue = [];
-    this.cursor = 0;
-    this.length = 0;
+    this.reset();
   }
 
+  /**
+   * Enqueue a value to the FIFO
+   *
+   * @param value {*}
+   * @fires FIFO#fifoValueAdded
+   * @fires FIFO#fifoNoLongerEmpty
+   */
   enqueue(value) {
     this.queue.push(value);
     this.length += 1;
@@ -20,7 +28,17 @@ class FIFO extends EventEmitter {
     }
   }
 
+  /**
+   * Dequeues a value from the FIFO
+   *
+   * @returns {*}
+   * @fires FIFO#fifoValueRemoved
+   * @fires FIFO#fifoEmpty
+   */
   dequeue() {
+    if (this.isEmpty()) {
+      return null;
+    }
     const value = this.queue[this.cursor];
     this.cursor += 1;
     this.length -= 1;
@@ -37,8 +55,25 @@ class FIFO extends EventEmitter {
     return value;
   }
 
+  /**
+   * Checks whether the FIFO is empty
+   * @returns {boolean}
+   */
   isEmpty() {
     return this.length === 0;
+  }
+
+  /**
+   * Clears the FIFO and prepares it for use
+   * @fires FIFO#fifoEmpty
+   */
+  reset(data) {
+    this.cursor = 0;
+    this.queue = data || [];
+    this.length = this.queue.length;
+    if (this.length === 0) {
+      this.emit('fifoEmpty');
+    }
   }
 }
 

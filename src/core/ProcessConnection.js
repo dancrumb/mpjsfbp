@@ -1,102 +1,62 @@
-import ProcessStatus from './FBPProcessStatus';
+import FBPProcessStatus from './FBPProcessStatus';
 import Connection from './Connection';
 import _ from 'lodash';
 
+const osProcess = process;
+
+/**
+ * @extends Connection
+ */
 class ProcessConnection extends Connection {
-  constructor(size) {
+  /**
+   *
+   */
+  constructor() {
     super();
 
     this.name = null;
-    this.capacity = size;
-
-    this.downStreamProcess = null; // downstream componentProvider
-    this.upSteamProcesses = null;
+    this.downstream = null; // downstream component
+    this.upstream = null;
   }
 
-  getIP(proc, callback) {
-    const connectionContents = this.contents;
-    if (this.hasData()) {
-      process.nextTick(() => {
-        _getIP(connectionContents, proc, callback);
-      });
-    } else {
-      connectionContents.once('fifoNoLongerEmpty', () => {
-        _getIP(connectionContents, proc, callback);
-      });
-    }
-  }
 
-  putIP(proc, ip, callback) {
-    if (ip.owner != proc) {
-      callback();
-    }
-    if (this.closed) {
-      callback(new Error("Tried to put an IP into a closed connection"));
-    }
-
-    const connectionContents = this.contents;
-
-    //TODO: Signal that IP is available to downstream process
-
-    var ipEnqueuer = () => {
-      connectionContents.enqueue(ip);
-      callback();
-    };
-
-    if (connectionContents.length >= this.capacity) {
-      connectionContents.once('fifoValueRemoved', ipEnqueuer);
-    } else {
-      process.nextTick(ipEnqueuer);
-    }
-  }
-
-  closeFromUpstream() {
-    this.upstreamProcsUnclosed--;
-    if ((this.upstreamProcsUnclosed) <= 0) {
-      this.closed = true;
-    }
-  }
-
-  closeFromDownstream() {
-    this.upSteamProcesses.forEach(up => {
-      if (up.status == ProcessStatus.CLOSED) {
-        up.status = ProcessStatus.DONE;
+  /**
+   *
+   * @param proc
+   */
+  close(proc) {
+    super.close();
+    if (proc === this.downstream.process) {
+      if (this.hasData()) {
+        console.log(`${proc.name}: ${this.contents.length} IPs dropped because of close on ${this.name}`);
       }
-    });
-  }
-
-  closeFromInPort(proc) {
-    this.closed = true;
-    if (this.hasData()) {
-      console.log(`${proc.name}: ${this.contents.length} IPs dropped because of close on ${this.name}`);
+      this.purgeData();
     }
-    this.purgeData();
-    _.forEach(this.upSteamProcesses, process => {});
   }
 
+  /**
+   *
+   * @param {FBPProcess} upstreamProcess
+   * @param {string} outport
+   * @param {FBPProcess} downstreamProcess
+   * @param {string} inport
+   */
   connectProcesses(upstreamProcess, outport, downstreamProcess, inport) {
-    this.name = downstreamProcess;
+    this.name = downstreamProcess.name;
 
-    this.upSteamProcesses = {
-      processName: upstreamProcess,
+    this.upstream = {
+      process: upstreamProcess,
       portName: outport
     };
-    upstreamProcess.addDowntreamConnection(outport, this);
+    upstreamProcess.addDownstreamConnection(outport, this);
 
-    this.downStreamProcess = {
-      processName: downstreamProcess,
+    this.downstream = {
+      process: downstreamProcess,
       portName: inport
     };
-    downstreamProcess.addUpstreamConnection(inport, upstreamProcess);
+    downstreamProcess.addUpstreamConnection(inport, this);
 
   }
-}
-
-
-
-function _getIP(connectionContents, proc, callback) {
-  const ip = connectionContents.dequeue();
-  callback(null, ip);
 }
 
 export default ProcessConnection;

@@ -1,9 +1,8 @@
-'use strict';
-var decomposer = require('../../lib/components/decomposer');
+import decomposer from '../../src/components/decomposer';
 
-describe('decomposer', function () {
-  it('generates multiple IPs from a single IIP containing an array of values', function () {
-    var scaffold = new ComponentScaffold({
+describe('decomposer', () => {
+  it('generates multiple IPs from a single IIP containing an array of values', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: ["[1, 2, 3, 4, 5]"]
         },
@@ -20,8 +19,8 @@ describe('decomposer', function () {
     scaffold.runTests(it);
   });
 
-  it('generates no IPs from a single IIP containing an empty array', function () {
-    var scaffold = new ComponentScaffold({
+  it('generates no IPs from a single IIP containing an empty array', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: ["[]"]
         },

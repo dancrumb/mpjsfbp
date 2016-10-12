@@ -1,6 +1,10 @@
-import Enum from './Enum';
+import {
+  Enum
+} from 'enumify';
 
-module.exports = Enum([
+class FBPProcessStatus extends Enum {}
+
+FBPProcessStatus.initEnum([
   'NOT_INITIALIZED',
   'INITIALIZED',
   'ACTIVE',
@@ -10,3 +14,5 @@ module.exports = Enum([
   'CLOSED',
   'DONE'
 ]);
+
+export default FBPProcessStatus;

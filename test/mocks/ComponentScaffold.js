@@ -1,192 +1,180 @@
-var _ = require('lodash');
-var IP = require('../../lib/core/IP');
-var sync = require('synchronize');
-var PortScaffold = require('./PortScaffold');
-var RuntimeScaffold = require('./RuntimeScaffold');
+import _ from 'lodash';
+import IP from '../../src/core/IP';
+import sync from 'synchronize';
+import PortScaffold from './PortScaffold';
+import RuntimeScaffold from './RuntimeScaffold';
 
-var ComponentScaffold = function (options) {
-  if(typeof options !== 'object') {
-    throw new Error('ComponentScaffold needs port information and (optionally) tests.');
-  }
-  this.inports = _.reduce(options.inports, function(inports, buffer, portname) {
-    inports[portname] = new PortScaffold({
-      name: portname,
-      type: "IN",
-      buffer: ComponentScaffold.makeIPs(buffer)
-    });
-
-    return inports;
-  }, {});
-
-  this.inports = _.reduce(options.iips, function(inports, buffer, portname) {
-    inports[portname] = new PortScaffold({
-      name: portname,
-      type: "IIP",
-      buffer: ComponentScaffold.makeIPs([buffer])
-    });
-
-    return inports;
-  }, this.inports);
-
-  this.outports = _.reduce(options.outports, function(outports, expectation, portname) {
-    outports[portname] = {};
-
-    outports[portname].port = new PortScaffold({
-      name: portname,
-      type: "OUT",
-      buffer: []
-    });
-    outports[portname].expected = ComponentScaffold.makeIPs(expectation);
-
-    return outports;
-  }, {});
-
-  this.droppedIPs = {
-    expected: ComponentScaffold.makeIPs(options.droppedIPs || []),
-    actual: []
-  };
-
-  this.tests = options.tests || [];
-};
-
-
-ComponentScaffold.prototype.openInputPortArray = function (portName) {
-  var re = new RegExp(portName + '\\[\\d+\\]');
-
-  const inports = this.inports;
-  return Object.keys(inports)
-    .filter(function (portName) {
-      return re.test(portName);
-    })
-    .sort()
-    .map(function (portName) {
-      return inports[portName];
-    });
-};
-
-ComponentScaffold.prototype.openInputPort = function (portName) {
-  const inport = this.inports[portName];
-  if(!inport) {
-    console.error('Request for non-existent port: ' + portName);
-  }
-  return inport;
-};
-
-ComponentScaffold.prototype.openOutputPortArray = function (portName) {
-  var re = new RegExp(portName + '\\[\\d+\\]');
-
-  const outports = this.outports;
-  return Object.keys(outports)
-    .filter(function (portName) {
-      return re.test(portName);
-    })
-    .sort()
-    .map(function (portName) {
-      return outports[portName].port;
-    });
-};
-
-ComponentScaffold.prototype.openOutputPort = function (portName, optional) {
-  const outport = this.outports[portName];
-  if(!outport) {
-    if(optional !== 'OPTIONAL') {
-      console.error('Request for non-existent port: ' + portName);
+class ComponentScaffold {
+  constructor(options) {
+    if(typeof options !== 'object') {
+      throw new Error('ComponentScaffold needs port information and (optionally) tests.');
     }
-    return null;
+    this.inports = _.reduce(options.inports, (inports, buffer, portname) => {
+      inports[portname] = new PortScaffold({
+        name: portname,
+        type: "IN",
+        buffer: ComponentScaffold.makeIPs(buffer)
+      });
+
+      return inports;
+    }, {});
+
+    this.inports = _.reduce(options.iips, (inports, buffer, portname) => {
+      inports[portname] = new PortScaffold({
+        name: portname,
+        type: "IIP",
+        buffer: ComponentScaffold.makeIPs([buffer])
+      });
+
+      return inports;
+    }, this.inports);
+
+    this.outports = _.reduce(options.outports, (outports, expectation, portname) => {
+      outports[portname] = {};
+
+      outports[portname].port = new PortScaffold({
+        name: portname,
+        type: "OUT",
+        buffer: []
+      });
+      outports[portname].expected = ComponentScaffold.makeIPs(expectation);
+
+      return outports;
+    }, {});
+
+    this.droppedIPs = {
+      expected: ComponentScaffold.makeIPs(options.droppedIPs || []),
+      actual: []
+    };
+
+    this.tests = options.tests || [];
   }
-  return outport.port;
-};
 
-ComponentScaffold.prototype.dropIP = function(ip) {
-  this.droppedIPs.actual.push(ip);
-};
+  openInputPortArray(portName) {
+    const re = new RegExp(`${portName}\\[\\d+\\]`);
 
-ComponentScaffold.makeIPs = function (values) {
-  return values.map(function (val) {
-    if(val.hasOwnProperty('type') && val.hasOwnProperty('owner')) {
-      return val
+    const inports = this.inports;
+    return Object.keys(inports)
+      .filter(portName => re.test(portName))
+      .sort()
+      .map(portName => inports[portName]);
+  }
+
+  openInputPort(portName) {
+    const inport = this.inports[portName];
+    if(!inport) {
+      console.error(`Request for non-existent port: ${portName}`);
+    }
+    return inport;
+  }
+
+  openOutputPortArray(portName) {
+    const re = new RegExp(`${portName}\\[\\d+\\]`);
+
+    const outports = this.outports;
+    return Object.keys(outports)
+      .filter(portName => re.test(portName))
+      .sort()
+      .map(portName => outports[portName].port);
+  }
+
+  openOutputPort(portName, optional) {
+    const outport = this.outports[portName];
+    if(!outport) {
+      if(optional !== 'OPTIONAL') {
+        console.error(`Request for non-existent port: ${portName}`);
+      }
+      return null;
+    }
+    return outport.port;
+  }
+
+  dropIP(ip) {
+    this.droppedIPs.actual.push(ip);
+  }
+
+  static makeIPs(values) {
+    return values.map(val => {
+      if(val instanceof IP) {
+        return val
+      } else {
+        return new IP(val);
+      }
+    });
+  }
+
+  static openIP() {
+    const ip = new IP();
+    ip.type = IP.Types.OPEN;
+    return ip;
+  }
+
+  static closeIP() {
+    const ip = new IP();
+    ip.type = IP.Types.CLOSE;
+    return ip;
+  }
+
+  run(component, cb) {
+    const runtime = new RuntimeScaffold();
+    const mockProcess = {
+      dropIP: this.dropIP.bind(this),
+      openInputPort: this.openInputPort.bind(this),
+      openInputPortArray: this.openInputPortArray.bind(this),
+      openOutputPort: this.openOutputPort.bind(this),
+      openOutputPortArray: this.openOutputPortArray.bind(this),
+      IPTypes: IP.Types,
+      createIPBracket(type) {
+        const ip = new IP();
+        ip.type = type;
+        return ip;
+      },
+      createIP(value) {
+        return new IP(value);
+      }
+    };
+    if(cb) {
+      sync.fiber(() => {
+        component.call(mockProcess, runtime);
+        cb();
+      })
     } else {
-      return new IP(val);
-    }
-  });
-};
-
-ComponentScaffold.openIP = function () {
-  var ip = new IP();
-  ip.type = IP.Types.OPEN;
-  return ip;
-};
-
-ComponentScaffold.closeIP = function () {
-  var ip = new IP();
-  ip.type = IP.Types.CLOSE;
-  return ip;
-};
-
-ComponentScaffold.prototype.run = function (component, cb) {
-  var runtime = new RuntimeScaffold();
-  const mockProcess = {
-    dropIP: this.dropIP.bind(this),
-    openInputPort: this.openInputPort.bind(this),
-    openInputPortArray: this.openInputPortArray.bind(this),
-    openOutputPort: this.openOutputPort.bind(this),
-    openOutputPortArray: this.openOutputPortArray.bind(this),
-    IPTypes: IP.Types,
-    createIPBracket: function (type) {
-      var ip = new IP();
-      ip.type = type;
-      return ip;
-    },
-    createIP: function (value) {
-      return new IP(value);
-    }
-  };
-  if(cb) {
-    sync.fiber(function () {
       component.call(mockProcess, runtime);
-      cb();
-    })
-  } else {
-    component.call(mockProcess, runtime);
+    }
   }
-};
 
-ComponentScaffold.prototype.verifyOutputs = function(expect) {
-  _.forEach(this.outports, function (portInfo) {
-    expect(portInfo.expected.length).to.be.equal(portInfo.port.getBuffer().length);
-    _.forEach(_.zip(portInfo.expected, portInfo.port.getBuffer().actual), _.spread(function(exp, act) {
+  verifyOutputs(expect) {
+    _.forEach(this.outports, portInfo => {
+      expect(portInfo.expected.length).to.be.equal(portInfo.port.getBuffer().length);
+      _.forEach(_.zip(portInfo.expected, portInfo.port.getBuffer().actual), _.spread((exp, act) => {
+        expect(exp).to.equalPropertiesOn(act);
+      }));
+    })
+  }
+
+  verifyDroppedIPs(expect) {
+    expect(this.droppedIPs.expected.length).to.be.equal(this.droppedIPs.actual.length);
+    _.forEach(_.zip(this.droppedIPs.expected, this.droppedIPs.actual), _.spread((exp, act) => {
       expect(exp).to.equalPropertiesOn(act);
     }));
-  })
-};
+  }
 
-ComponentScaffold.prototype.verifyDroppedIPs = function (expect) {
-  expect(this.droppedIPs.expected.length).to.be.equal(this.droppedIPs.actual.length);
-  _.forEach(_.zip(this.droppedIPs.expected, this.droppedIPs.actual), _.spread(function(exp, act) {
-    expect(exp).to.equalPropertiesOn(act);
-  }));
-};
+  runTests(it) {
+    _.forEach(this.tests, (test, description) => {
+      it(description, test);
+    })
+  }
 
-ComponentScaffold.prototype.runTests = function (it) {
-  _.forEach(this.tests, function (test, description) {
-    it(description, test);
-  })
-};
+  ensureAllIPsAccountedFor(expect) {
+    const inIPs = _.reduce(this.inports, (ips, inport) => ips.concat(inport.buffer), []);
+    const outIPs = _.reduce(this.outports, (ips, outport) => ips.concat(outport.expected), this.droppedIPs.expected);
 
-ComponentScaffold.prototype.ensureAllIPsAccountedFor = function (expect) {
-  var inIPs = _.reduce(this.inports, function (ips, inport) {
-    return ips.concat(inport.buffer);
-  }, []);
-  var outIPs = _.reduce(this.outports, function (ips, outport) {
-    return ips.concat(outport.expected);
-  }, this.droppedIPs.expected);
+    expect(outIPs.length).to.not.be.below(inIPs.length);
+    expect(outIPs).to.include.deep.members(inIPs);
 
-  expect(outIPs.length).to.not.be.below(inIPs.length);
-  expect(outIPs).to.include.deep.members(inIPs);
+    console.log(inIPs);
+    console.log(outIPs);
+  }
+}
 
-  console.log(inIPs);
-  console.log(outIPs);
-};
-
-
-module.exports = ComponentScaffold;
+export default ComponentScaffold;

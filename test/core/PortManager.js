@@ -2,20 +2,20 @@
  * Created by danrumney on 5/27/16.
  */
 
-var PortManager = require('../../lib/core/PortManager');
+var PortManager = require('../../src/core/PortManager');
 
 
 describe('PortManager', function() {
 
   it('provides access to input ports', function() {
-    var pm = new PortManager('PROCESS', {
+    var pm = new PortManager({
       inports: { 'IN' : { portName: 'IN' } }
     });
 
     var port = pm.openInputPort('IN');
     expect(port).to.be.ok;
 
-    pm = new PortManager('PROCESS', {
+    pm = new PortManager({
       outports: { 'IN' : { portName: 'IN' } }
     });
 
@@ -24,14 +24,14 @@ describe('PortManager', function() {
   });
 
   it('provides access to output ports', function() {
-    var pm = new PortManager('PROCESS', {
+    var pm = new PortManager( {
       outports: { 'OUT' : { portName: 'OUT' } }
     });
 
     var port = pm.openOutputPort('OUT');
     expect(port).to.be.ok;
 
-    pm = new PortManager('PROCESS', {
+    pm = new PortManager( {
       inports: { 'OUT' : { portName: 'OUT' } }
     });
 
@@ -41,7 +41,7 @@ describe('PortManager', function() {
   });
 
   it('provides access to input port arrays', function() {
-    var pm = new PortManager('PROCESS', {
+    var pm = new PortManager( {
       inports: {
         'IN[0]' : { portName: 'IN[0]' },
         'IN[1]' : { portName: 'IN[1]' },
@@ -67,7 +67,7 @@ describe('PortManager', function() {
   });
 
   it('provides access to output port arrays', function() {
-    var pm = new PortManager('PROCESS', {
+    var pm = new PortManager( {
       outports: {
         'OUT[0]' : { portName: 'OUT[0]' },
         'OUT[1]' : { portName: 'OUT[1]' },
@@ -79,7 +79,7 @@ describe('PortManager', function() {
     expect(port).to.be.ok;
     expect(port).to.have.length(3);
 
-    pm = new PortManager('PROCESS', {
+    pm = new PortManager( {
       inports: {
         'OUT[0]' : { portName: 'OUT[0]' },
         'OUT[1]' : { portName: 'OUT[1]' },
@@ -92,7 +92,7 @@ describe('PortManager', function() {
   });
 
   it('allows you to add input ports', function () {
-    var pm = new PortManager('PROCESS');
+    var pm = new PortManager();
     pm.addInputPort({portName : 'IN'});
     pm.addOutputPort({portName : 'OUT'});
     expect(pm.openInputPort('IN')).to.be.ok;
@@ -106,10 +106,4 @@ describe('PortManager', function() {
     expect(pm.openOutputPort('IN')).to.not.be.ok;
     expect(pm.openOutputPort('OUT')).to.be.ok;
   });
-
-  it('defaults the componentProvider name to "UNKNOWN"', function () {
-    var pm = new PortManager();
-    expect(pm.name).to.equal('UNKNOWN');
-  })
-
 });

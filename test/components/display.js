@@ -1,16 +1,12 @@
-'use strict';
+import display from '../../src/components/display';
 
-var display = require('../../lib/components/display');
-
-describe('display', function () {
-  it('displays any incoming IPs', function () {
-    var scaffold = new ComponentScaffold({
+describe('display', () => {
+  it('displays any incoming IPs', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           'IN': [1, 2, 3, 4, 5, 6]
         },
-        outports: {
-
-        },
+        outports: { },
         droppedIPs: [1, 2, 3, 4, 5, 6]
       }
     );
@@ -21,8 +17,8 @@ describe('display', function () {
     scaffold.ensureAllIPsAccountedFor(expect);
     scaffold.runTests(it);
   });
-  it('displays and forwards any incoming IPs', function () {
-    var scaffold = new ComponentScaffold({
+  it('displays and forwards any incoming IPs', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           'IN': [1, 2, 3, 4, 5, 6]
         },

@@ -1,22 +1,33 @@
-import Enum from './Enum';
+import {
+  Enum
+} from 'enumify';
 
+/**
+ * Information Packet per the FBP specification
+ */
 class IP {
   constructor(contents) {
-    this.owner = null;
     this.type = IP.Types.NORMAL;
     this.contents = contents;
   }
 
   toString() {
-    return `IP: { \n type:${IP.Types.__lookup(this.type)}, \n owner: ${this.owner},\n contents: ${(this.contents === null) ? "<null>" : "<data>"}\n}`
+    return `IP: { 
+  type:${this.type.name},
+  contents: ${(this.contents === null) ? "<null>" : "<data>"}
+}`;
   }
 }
 
-IP.Types = new Enum([
+class IPTypes extends Enum {}
+IPTypes.initEnum([
   "NORMAL",
   "OPEN",
   "CLOSE"
 ]);
+
+
+IP.Types = IPTypes;
 
 ["NORMAL", "OPEN", "CLOSE"].forEach(type => {
   Object.defineProperty(IP, type, {

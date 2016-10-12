@@ -1,9 +1,8 @@
-'use strict';
-var copier = require('../../lib/components/copier');
+import copier from '../../src/components/copier';
 
-describe('copier', function () {
-  it('should copy multiple IPs', function () {
-    var scaffold = new ComponentScaffold({
+describe('copier', () => {
+  it('should copy multiple IPs', () => {
+    const scaffold = new ComponentScaffold({
         inports: {
           IN: [1, 2, 3, 4, 5]
         },

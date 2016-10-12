@@ -1,8 +1,7 @@
 'use strict';
 
 var Fiber = require('fibers'),
-  ProcessStatus = require('./ComponentProvider').Status,
-  trace = require('./trace');
+  ProcessStatus = require('./Component').Status;
 
 function getInportWithData(inportArray) {
   var allDrained = true;
@@ -20,9 +19,9 @@ function getInportWithData(inportArray) {
   });
 
   if (inportElementWithData >= 0) {
-    trace('findIPE_with_data - found: ' + inportElementWithData);
+    console.log('findIPE_with_data - found: ' + inportElementWithData);
   } else if (allDrained) {
-    trace('findIPE_with_data: all drained');
+    console.log('findIPE_with_data: all drained');
   } else {
     inportElementWithData = null;
   }
@@ -55,7 +54,7 @@ module.exports.getElementWithSmallestBacklog = function (array, elem) {
 module.exports.findInputPortElementWithData = function (array) {
   var proc = Fiber.current.fbpProc;
 
-  trace('findIPE_with_data ');
+  console.log('findIPE_with_data ');
 
   while (true) {
     var inportWitData = getInportWithData(array);

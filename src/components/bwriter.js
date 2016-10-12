@@ -7,7 +7,6 @@
  */
 
 var fs = require('fs');
-var trace = require('../core/trace');
 var _ioHelper = require('./_ioHelper');
 
 var WRITE_SIZE = 4;
@@ -20,7 +19,7 @@ module.exports = function reader(runtime) {
   var fname = ip.contents;
   this.dropIP(ip);
 
-  trace("Opening file: " + fname);
+  console.log("Opening file: " + fname);
   var openResult = runtime.runAsyncCallback(_ioHelper.openFile(fname, 'w', this));
 
   var fileDescriptor = openResult[1];
@@ -28,13 +27,13 @@ module.exports = function reader(runtime) {
     console.log("OPEN error: " + openResult);
     return;
   }
-  trace("Got fd: " + fileDescriptor);
+  console.log("Got fd: " + fileDescriptor);
 
   var inPort = this.openInputPort('IN');
-  trace("Starting write");
+  console.log("Starting write");
   var bracket = inPort.receive();
   if (bracket.type != this.IPTypes.OPEN) {
-    console.log("ERROR: Received non OPEN bracket");
+    console.log("ERROR: Received non-OPEN bracket");
     console.log(bracket);
     return;
   }
