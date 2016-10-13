@@ -16,7 +16,7 @@ module.exports = function wsrecv(runtime) {
 
   var ws = null;
   while (true) {
-    var result = runtime.runAsyncCallback(genWsReceiveFun(runtime, wss, ws, this));
+    var result = this.runAsyncCallback(genWsReceiveFun(runtime, wss, ws, this));
     console.log('wsrecv callback complete: ' + this.name);
     //console.log(result);
     if (result[1].endsWith('@kill')) {

@@ -2,7 +2,7 @@ import _ from 'lodash';
 import IP from '../../src/core/IP';
 import sync from 'synchronize';
 import PortScaffold from './PortScaffold';
-import RuntimeScaffold from './RuntimeScaffold';
+
 
 class ComponentScaffold {
   constructor(options) {
@@ -116,13 +116,13 @@ class ComponentScaffold {
   }
 
   run(component, cb) {
-    const runtime = new RuntimeScaffold();
     const mockProcess = {
       dropIP: this.dropIP.bind(this),
       openInputPort: this.openInputPort.bind(this),
       openInputPortArray: this.openInputPortArray.bind(this),
       openOutputPort: this.openOutputPort.bind(this),
       openOutputPortArray: this.openOutputPortArray.bind(this),
+      runAsyncCallback: this.runAsyncCallback.bind(this),
       IPTypes: IP.Types,
       createIPBracket(type) {
         const ip = new IP();
@@ -135,12 +135,23 @@ class ComponentScaffold {
     };
     if(cb) {
       sync.fiber(() => {
-        component.call(mockProcess, runtime);
+        component.call(mockProcess);
         cb();
       })
     } else {
-      component.call(mockProcess, runtime);
+      component.call(mockProcess);
     }
+  }
+
+  runAsyncCallback(asyncFn) {
+
+      var caller = function (cb) {
+        asyncFn(function(results) {
+          cb(null, results);
+        })
+      };
+
+      return sync.await(caller(sync.defer()))
   }
 
   verifyOutputs(expect) {

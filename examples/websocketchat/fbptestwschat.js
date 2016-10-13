@@ -1,9 +1,9 @@
 var fbp = require('../..');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
-var receiver = network.defProc(require('../../components/wsrecv'));
+var receiver = network.defProc(require('/components/wsrecv'));
 var simproc = network.defProc(require('./wssimproc'));
 var send = network.defProc(require('./wsbroadcast'));
 

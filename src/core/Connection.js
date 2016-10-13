@@ -55,13 +55,14 @@ class Connection extends EventEmitter {
       const ip = this.contents.dequeue();
       this.contents.removeListener('fifoNoLongerEmpty', dequeuer);
       this.contents.removeListener('connectionCompleted', dequeuer);
-      console.log(`{ "type": "ipDequeue", "ip": ${ip}}`);
+      console.log(`{ "type": "ipDequeue", "name": "${this.name}", "ip": ${ip}}`);
       callback(null, ip);
     };
+
     console.log(`{ "type": "connectionState", "contents": ${JSON.stringify(this.contents.queue)}, "cursor": ${this.contents.cursor}, "length": ${this.contents.length}}`);
     if (!this.couldSendData()) {
       console.log(`{ "type": "getIPResolution", "resolution": "dataDepleted"}`);
-      callback(null, null)
+      process.nextTick(() => callback(null, null));
     } else if (this.hasData()) {
       console.log(`{ "type": "getIPResolution", "resolution": "dataAvailable"}`);
       process.nextTick(dequeuer);

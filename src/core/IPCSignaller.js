@@ -5,8 +5,9 @@ import {
   ChildProcess
 } from 'child_process';
 export default function (type, details) {
-  var messageId = `${this.name}-${(new Date).getTime()}`;
   var isFromProcessToComponent = (this.component && (this.component instanceof ChildProcess));
+
+  var messageId = `${this.name}-${isFromProcessToComponent ? "P" : "C"}-${(new Date).getTime()}`;
 
   var sender = isFromProcessToComponent ? this.component : process;
 

@@ -25,6 +25,7 @@ class InputPort extends Port {
    */
   receive() {
     if (this.closed) {
+      console.log(`{ "type": "inputPortReceiveFromClosed", "port": "${this.name}", "component": "${this.component ? this.component.name : null}" }`);
       return null;
     }
 
@@ -38,7 +39,6 @@ class InputPort extends Port {
 
     if (!ip) {
       ip = null;
-      this.close();
     }
     return ip;
   }

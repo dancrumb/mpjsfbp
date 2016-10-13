@@ -20,7 +20,7 @@ module.exports = function reader(runtime) {
   this.dropIP(ip);
 
   console.log("Opening file: " + fname);
-  var openResult = runtime.runAsyncCallback(_ioHelper.openFile(fname, 'w', this));
+  var openResult = this.runAsyncCallback(_ioHelper.openFile(fname, 'w', this));
 
   var fileDescriptor = openResult[1];
   if (fileDescriptor == undefined) {
@@ -39,37 +39,37 @@ module.exports = function reader(runtime) {
   }
   this.dropIP(bracket);
 
-  writeFile(runtime, this, fileDescriptor, inPort, chunkSize);
+  writeFile.call(this, fileDescriptor, inPort, chunkSize);
 
   fs.closeSync(fileDescriptor);
 };
 
-function writeFile(runtime, proc, fileDescriptor, inPort, size) {
+function writeFile(fileDescriptor, inPort, size) {
   var buffer = new Buffer(size);
   var byteCount = 0;
   do {
     var inIP = inPort.receive();
-    if (inIP.type == proc.IPTypes.NORMAL) {
+    if (inIP.type == this.IPTypes.NORMAL) {
       buffer.writeUInt8(inIP.contents, byteCount);
       byteCount++;
       if (byteCount === size) {
-        var success = writeBuffer(runtime, fileDescriptor, buffer, byteCount);
+        var success = writeBuffer.call(this, fileDescriptor, buffer, byteCount);
         if (!success) {
           return;
         }
         byteCount = 0;
       }
     }
-    proc.dropIP(inIP);
-  } while (inIP.type != proc.IPTypes.CLOSE);
+    this.dropIP(inIP);
+  } while (inIP.type != this.IPTypes.CLOSE);
   if (byteCount > 0) {
-    writeBuffer(runtime, fileDescriptor, buffer, byteCount);
+    writeBuffer.call(this, fileDescriptor, buffer, byteCount);
   }
 }
 
 
-function writeBuffer(runtime, fileDescriptor, writeBuffer, byteCount) {
-  var writeResult = runtime.runAsyncCallback(writeData(fileDescriptor, writeBuffer, byteCount));
+function writeBuffer(fileDescriptor, writeBuffer, byteCount) {
+  var writeResult = this.runAsyncCallback(writeData(fileDescriptor, writeBuffer, byteCount));
   if (writeResult[0]) {
     console.error(writeResult[0]);
     return false;

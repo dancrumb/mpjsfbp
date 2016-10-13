@@ -2,7 +2,7 @@ var fbp = require('../src')
   , path = require('path');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var reader = network.defProc('./components/reader', 'Read');
 var reverse = network.defProc('./components/reverse', 'Rev');

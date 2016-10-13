@@ -41,18 +41,4 @@ describe('InputPort', function() {
     expect(ip).to.be.equal(fakeIP);
   });
 
-  it('returns closes if it receives an EOS', () => {
-    var fakeComponent = {
-      addInputPort(port) {},
-      awaitResponse() {
-        return null;
-      }
-    };
-
-    var inputPort = new InputPort(fakeComponent, 'PORT');
-    var ip = inputPort.receive();
-
-    expect(ip).to.be.null;
-    expect(inputPort.isOpen()).to.be.false;
-  });
 });

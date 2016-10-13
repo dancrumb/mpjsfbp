@@ -9,7 +9,7 @@ var fbp = require('../src')
   , path = require('path');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var readerm = network.defProc('./components/reader', 'readerm');
 var readerd = network.defProc('./components/reader', 'readerd');

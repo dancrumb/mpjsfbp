@@ -10,10 +10,10 @@ module.exports = function httpserver(runtime) {
   var portno = ip.contents;
   var server = http.createServer(handleServerRequest);
 
-  runtime.runAsyncCallback(genListenFun(runtime, server, portno));
+  this.runAsyncCallback(genListenFun(runtime, server, portno));
 
   while (true) {
-    var result = runtime.runAsyncCallback(genReceiveFun(runtime, server, portno, this));
+    var result = this.runAsyncCallback(genReceiveFun(server, portno, this));
 
     for (var i = 0; i < result.length; ++i) {
       var r = result[i];
@@ -40,7 +40,7 @@ function handleServerRequest(req, res) {
   }
 }
 
-function genListenFun(runtime, server, portno) {
+function genListenFun(server, portno) {
   return function (done) {
     process.nextTick(function () {
       done();

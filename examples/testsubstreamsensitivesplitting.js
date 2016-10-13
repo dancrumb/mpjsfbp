@@ -10,7 +10,7 @@ var fbp = require('../src');
 // for some reason, this isn't happening - more research needs to take place!
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var genss = network.defProc('./examples/components/genss.js', 'Gen');
 var lbal = network.defProc('./components/lbal.js', 'LBal');

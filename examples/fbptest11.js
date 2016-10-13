@@ -1,9 +1,9 @@
 var fbp = require('../src');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
-var gendata = network.defProc('./examples/components/gendata', 'Gen');
+var gendata = network.defProc('/components/gendata', 'Gen');
 var lbal = network.defProc('./components/lbal', 'LBal');
 var randdelay0 = network.defProc('./components/randdelay', 'RD0');
 var randdelay1 = network.defProc('./components/randdelay', 'RD1');

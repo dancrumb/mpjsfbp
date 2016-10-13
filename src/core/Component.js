@@ -46,14 +46,23 @@ class Component extends PortManager {
       if (message.type.name !== FBPProcessMessageType.INITIALIZE.name) {
         throw new Error("Uninitialized Component received message that wasn't 'INITIALIZE'");
       }
+      if (this.component) {
+        throw new Error("INITIALIZE received by initialized component");
+      }
       const initializationDetails = message.details;
+      this.name = initializationDetails.name;
 
-      this.component = require(initializationDetails.component.moduleLocation);
+      try {
+        this.component = require(initializationDetails.component.moduleLocation);
+      } catch (e) {
+        console.log(`{ "type": "error", "name": "${this.name}", "reason": "Failure to load component module: ${initializationDetails.component.moduleLocation}" }`);
+        this.signal(FBPProcessMessageType.ERROR, e);
+      }
       if (initializationDetails.component.componentField) {
         this.component = initializationDetails.component.componentField;
       }
 
-      this.name = initializationDetails.name;
+
 
       this.initializeInPorts(initializationDetails);
       this.initializeOutPorts(initializationDetails);
@@ -183,6 +192,15 @@ class Component extends PortManager {
     if (ip.type != this.IPTypes.NORMAL) {
       cont = `${ip.type.name}, ${cont}`;
     }
+  }
+
+  runAsyncCallback(callback) {
+    this.signal(FBPProcessMessageType.ASYNC_CALLBACK);
+    callback((results) => {
+      this.signal(FBPProcessMessageType.CALLBACK_COMPLETE);
+      this.componentFiber.run(results);
+    });
+    return this.awaitResponse();
   }
 
   activate() {

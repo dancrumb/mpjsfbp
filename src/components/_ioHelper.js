@@ -2,8 +2,8 @@ import fs from 'fs';
 
 function makeFBPFSCallback(fsFunction, path, flags) {
   return done => {
-    fs[fsFunction].call(fs, path, flags, (err, fd) => {
-      done([err, fd]);
+    fs[fsFunction].call(fs, path, flags, (err, result) => {
+      done([err, result]);
     });
   }
 }
@@ -27,6 +27,6 @@ export default {
     },
 
     readFile(path, flags) {
-      return makeFBPFSCallback('read', path, flags);
+      return makeFBPFSCallback('readFile', path, flags);
     }
 };

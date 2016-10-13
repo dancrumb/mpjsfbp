@@ -1,7 +1,7 @@
 var fbp = require('../..');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var receiver = network.defProc(require('../../components/httpserver'));
 var myproc = network.defProc(require('./myproc'));

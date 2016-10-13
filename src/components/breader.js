@@ -20,7 +20,7 @@ export default function reader(runtime) {
   this.dropIP(ip);
 
   console.log(`Opening file: ${fname}`);
-  const openResult = runtime.runAsyncCallback(_ioHelper.openFile(fname, 'r', this));
+  const openResult = this.runAsyncCallback(_ioHelper.openFile(fname, 'r', this));
 
   const fileDescriptor = openResult[1];
   if (fileDescriptor == undefined) {
@@ -32,16 +32,16 @@ export default function reader(runtime) {
   const outport = this.openOutputPort('OUT');
   console.log("Starting read");
   outport.send(this.createIPBracket(this.IPTypes.OPEN));
-  readFile(runtime, this, fileDescriptor, outport, chunkSize);
+  readFile.call(this, fileDescriptor, outport, chunkSize);
 
   fs.closeSync(fileDescriptor);
   outport.send(this.createIPBracket(this.IPTypes.CLOSE));
 
 };
 
-function readFile(runtime, proc, fileDescriptor, outport, chunkSize) {
+function readFile(fileDescriptor, outport, chunkSize) {
   do {
-    const readResult = runtime.runAsyncCallback(readData(fileDescriptor, chunkSize));
+    const readResult = this.runAsyncCallback(readData(fileDescriptor, chunkSize));
     if (readResult[0]) {
       console.error(readResult[0]);
       return;
@@ -52,7 +52,7 @@ function readFile(runtime, proc, fileDescriptor, outport, chunkSize) {
     for (let i = 0; i < bytesRead; i++) {
       const byte = data[i];
       console.log(`Got byte: ${byte}`);
-      outport.send(proc.createIP(byte));
+      outport.send(this.createIP(byte));
     }
   } while (bytesRead === chunkSize);
 }

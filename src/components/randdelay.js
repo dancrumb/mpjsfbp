@@ -13,7 +13,7 @@ module.exports = function randdelay(runtime) {
     if (ip === null) {
       break;
     }
-    runtime.runAsyncCallback(genSleepFun(this, Math.random() * intvl));
+    this.runAsyncCallback(genSleepFun(this, Math.random() * intvl));
     outport.send(ip);
   }
 };

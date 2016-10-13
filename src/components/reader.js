@@ -10,15 +10,15 @@ module.exports = function reader(runtime) {
   var fname = ip.contents;
   this.dropIP(ip);
 
-  var result = runtime.runAsyncCallback(_ioHelper.readFile(fname, "utf8", this));
+  var result = this.runAsyncCallback(_ioHelper.readFile(fname, "utf8", this));
 
-  if (result[0] == undefined) {
-    console.log(result[1]);
+  if (result[0]) {
+    console.log(`readFile: ${result}`);
     return;
   }
 
   var outport = this.openOutputPort('OUT');
-  var array = result[0].split('\n');
+  var array = result[1].split('\n');
   sendArray.call(this, array, outport);
 
 };

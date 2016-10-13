@@ -18,7 +18,7 @@ module.exports = function writer(runtime) {
     this.dropIP(ip);
   }
 
-  var result = runtime.runAsyncCallback(myWriteFile(fname, string, "utf8", this));
+  var result = this.runAsyncCallback(myWriteFile(fname, string, "utf8", this));
   console.log('write complete: ' + this.name);
   if (result != null) {
     console.log(result);

@@ -294,6 +294,7 @@ class Network {
       });
 
       fbpProcess.on('error', e => {
+        _.forEach(network.processes, (process) => process.terminate());
         callback(new ProcessError(fbpProcess.name, e));
       });
 
@@ -319,15 +320,6 @@ class Network {
         if (allDone) {
           _.forEach(network.processes, (process) => process.terminate());
           callback();
-        }
-      });
-
-
-      fbpProcess.on('processDormant', () => {
-        var readyForShutdown = fbpProcess.isReadyForShutdown();
-        console.log("Process Dormant: %s, %s", fbpProcess.name, readyForShutdown);
-        if (readyForShutdown) {
-          fbpProcess.shutdownProcess();
         }
       });
 

@@ -10,6 +10,7 @@ FBPProcessStatus.initEnum([
   'ACTIVE',
   'WAITING_TO_RECEIVE',
   'WAITING_TO_SEND',
+  'WAITING_FOR_CALLBACK',
   'DORMANT',
   'CLOSED',
   'DONE'

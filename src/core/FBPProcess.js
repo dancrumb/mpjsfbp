@@ -12,6 +12,7 @@ import {
 import FBPProcessMessageType from './FBPProcessMessageType';
 import FBPProcessStatus from './FBPProcessStatus';
 import ProcessConnection from './ProcessConnection';
+import NullConnection from './NullConnection';
 import _ from 'lodash';
 import ipcSignaller from './IPCSignaller';
 
@@ -35,30 +36,42 @@ const signalHandlers = {
     this.setStatus(FBPProcessStatus.WAITING_TO_RECEIVE);
     console.log(`Looking for a connection on ${details.port}`);
     var connectionForReceive = this.getConnectionForReceive(details.port);
-    if (!connectionForReceive) {
-      console.error(`No connection found for '${details.port}' port of '${this.name}' process`);
-      //throw new Error("No connection available to handle IP_REQUESTED");
+
+    connectionForReceive.getIP((err, ip) => {
       this.setStatus(FBPProcessStatus.ACTIVE);
-      this.signal(FBPProcessMessageType.EOS_INBOUND);
-    } else {
-      connectionForReceive.getIP((err, ip) => {
-        this.setStatus(FBPProcessStatus.ACTIVE);
-        if (ip === null) {
-          this.signal(FBPProcessMessageType.EOS_INBOUND);
-        } else {
-          this.signal(FBPProcessMessageType.IP_INBOUND, {
-            port: details.port,
-            ip
-          });
-        }
-      })
-    }
+      if (ip === null) {
+        this.signal(FBPProcessMessageType.EOS_INBOUND, {
+          port: details.port
+        });
+      } else {
+        this.signal(FBPProcessMessageType.IP_INBOUND, {
+          port: details.port,
+          ip
+        });
+      }
+    });
+
   },
   INITIALIZATION_COMPLETE(message) {
     this.setStatus(FBPProcessStatus.INITIALIZED);
   },
   COMPONENT_COMPLETE(message) {
     this.setStatus(FBPProcessStatus.DORMANT);
+  },
+  ASYNC_CALLBACK(message) {
+    this.setStatus(FBPProcessStatus.WAITING_FOR_CALLBACK);
+  },
+  CALLBACK_COMPLETE(message) {
+    this.setStatus(FBPProcessStatus.ACTIVE);
+  },
+  PORT_CLOSURE(message) {
+    var upstreamConnections = this.upstreamConnections[message.port];
+    var downstreamConnection = this.downstreamConnections[message.port];
+    _.invokeMap(upstreamConnections, 'close');
+    _.invokeMap(downstreamConnection, 'close');
+  },
+  ERROR(message) {
+    this.emit('error', message.details);
   }
 };
 
@@ -96,13 +109,30 @@ class FBPProcess extends EventEmitter {
       if (handler) {
         console.log(`{ "type": "messageHandler", "receiver": "${this.name}", "messageId": "${message.id}", "messageType": "${message.type.name}", "messageDetails": ${JSON.stringify(message.details)} }`);
         handler.call(this, message, this.component);
-
-      } else if (message.type === FBPProcessMessageType.PORT_CLOSURE) {
-        this.emit('closePort', message.details);
-      } else if (message.type === FBPProcessMessageType.ERROR) {
-        this.emit('error', message.details);
       } else {
         console.log(`{"type":"error", "error": "Unknown message: ${JSON.stringify(message)}"}`);
+      }
+    });
+
+    this.on('processDormant', () => {
+      var readyForShutdown = this.isReadyForShutdown();
+      console.log(`{ "type": "processDormant", "name": "${this.name}", "readyForShutdown": ${readyForShutdown} }`);
+      if (readyForShutdown) {
+        this.shutdownProcess();
+      } else {
+        var dataReady = _.some(this.upstreamConnections, (connections) => {
+          return _.some(connections, (connection) => {
+            return connection.hasData();
+          });
+        });
+        if (dataReady) {
+          this.activate();
+        }
+      }
+    });
+    this.once('allUpstreamProcessesClosed', () => {
+      if (this.status === FBPProcessStatus.DORMANT || this.status === FBPProcessStatus.INITIALIZED) {
+        this.shutdownProcess();
       }
     });
   }
@@ -113,6 +143,12 @@ class FBPProcess extends EventEmitter {
         connection.once('ipAvailable', () => {
           if ((this.status === FBPProcessStatus.DORMANT) || (this.status === FBPProcessStatus.INITIALIZED)) {
             this.activate();
+          }
+        });
+        connection.once('connectionCompleted', () => {
+          this.openUpstreamProcesses--;
+          if (this.openUpstreamProcesses === 0) {
+            this.emit('allUpstreamProcessesClosed');
           }
         });
       });
@@ -149,7 +185,11 @@ class FBPProcess extends EventEmitter {
     var connectionsWithData = _.filter(portConnections, (conn) => conn.hasData());
     if (connectionsWithData.length === 0) {
       var connectionsWithPotential = _.filter(portConnections, (conn) => conn.couldActivateAProcess());
-      return _.sample(connectionsWithPotential);
+      if (connectionsWithPotential.length === 0) {
+        return new NullConnection();
+      } else {
+        return _.sample(connectionsWithPotential);
+      }
     } else {
       return _.sample(connectionsWithData);
     }
@@ -188,6 +228,8 @@ class FBPProcess extends EventEmitter {
 
   setStatus(newStatus) {
     this.status = newStatus;
+    console.log(`{ "type": "setStatus", "name": "${this.name}", "newStatus": ${newStatus} }`);
+
 
     this.emit('statusChange', {
       name: this.name,

@@ -19,6 +19,8 @@ FBPProcessMessageType.initEnum([
   'PORT_CLOSURE',
   'PROCESS_COMPLETING',
   'SHUTDOWN_PROCESS',
+  'ASYNC_CALLBACK',
+  'CALLBACK_COMPLETE',
   'ERROR'
 ]);
 
