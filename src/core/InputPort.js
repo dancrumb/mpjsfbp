@@ -19,24 +19,24 @@ class InputPort extends Port {
     }
   }
 
+  componentName() {
+    return (this.component ? this.component.name : null);
+  }
+
   /**
    *
    * @returns {IP|null}
    */
   receive() {
+    this.log.info({
+      "type": "InputPort#receive",
+      "closed": this.closed,
+      "port": this.name,
+      "component": this.componentName()
+    });
     if (this.closed) {
-      this.log.info({
-        "type": "inputPortReceiveFromClosed",
-        "port": this.name,
-        "component": (this.component ? this.component.name : null)
-      });
       return null;
     }
-    this.log.info({
-      "type": "inputPortReceive",
-      "port": this.name,
-      "component": (this.component ? this.component.name : null)
-    });
 
     this.emit("ipRequested", {
       portName: this.name
