@@ -5,11 +5,11 @@
  *  decide whether the IP is an open or close bracket, or a normal data IP
  */
 
-var fbp = require('..')
+var fbp = require('../src')
   , path = require('path');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var readerm = network.defProc('./components/reader', 'readerm');
 var readerd = network.defProc('./components/reader', 'readerd');
@@ -30,5 +30,5 @@ network.connect(readerc, 'OUT', gendatawithbreaks, 'IN');
 network.connect(gendatawithbreaks, 'OUT', compare, 'IN[1]');
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

@@ -23,7 +23,7 @@ describe('fbptest10', function() {
 // --- run ---
     var fiberRuntime = new fbp.FiberRuntime();
     expect(function() {
-      network.run(fiberRuntime, {trace: false}, done);
+      network.run({trace: false}, done);
     }).not.to.throw();
 
   });

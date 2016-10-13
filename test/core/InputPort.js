@@ -2,53 +2,43 @@
  * Created by danrumney on 5/27/16.
  */
 
-var InputPort = require('../../core/InputPort');
-var IIPConnection = require('../../core/IIPConnection');
-var ProcessConnection = require('../../core/ProcessConnection');
-var IP = require('../../core/IP');
-var FiberRuntime = require('../../core/runtimes/FiberRuntime');
+import InputPort  from '../../src/core/InputPort';
 
-
-var getTestInPort = function (connection) {
-  var fiberRuntime = new FiberRuntime();
-  var inPort = new InputPort();
-  inPort.name = "Test InPort";
-  connection.setRuntime(fiberRuntime);
-  inPort.conn = connection;
-  return inPort;
-};
 
 describe('InputPort', function() {
 
+  it('automatically adds itself to a componentProvider on instantiation', () => {
+    var fakeComponent = {
+      addInputPort(port) {}
+    };
+    var componentProviderSpy = sinon.spy(fakeComponent, 'addInputPort');
 
-  it('can receive IIPs', function(done) {
-    var inPort = getTestInPort(new IIPConnection("test"));
+    var inputPort = new InputPort(fakeComponent, 'PORT')
 
-    global.tracing= true;
-
-    TestFiber(function(mockProcess) {
-      var ip = inPort.receive();
-
-      expect(ip.contents).to.be.equal('test');
-      expect(ip.owner).to.be.equal(mockProcess);
-      expect(ip.type).to.be.equal(IP.NORMAL);
-
-      done();
-    });
+    expect(componentProviderSpy).to.have.been.calledWith(inputPort);
   });
 
-  it('returns null from a closed connection', function(done) {
-    var inPort = getTestInPort(new ProcessConnection(1));
-    inPort.conn.closed = true;
+  it('returns null when closed', () => {
+    var inputPort = new InputPort(null, 'PORT');
+    inputPort.close();
+    var ip = inputPort.receive();
 
-    global.tracing= true;
+    expect(ip).to.be.null;
+  });
 
-    TestFiber(function() {
-      var ip = inPort.receive();
+  it('returns an IP when receive is called', () => {
+    var fakeIP = {};
+    var fakeComponent = {
+      addInputPort(port) {},
+      awaitResponse() {
+        return fakeIP;
+      }
+    };
 
-      expect(ip).to.be.null;
+    var inputPort = new InputPort(fakeComponent, 'PORT');
+    var ip = inputPort.receive();
 
-      done();
-    });
-  })
+    expect(ip).to.be.equal(fakeIP);
+  });
+
 });

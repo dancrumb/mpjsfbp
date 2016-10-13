@@ -1,23 +1,21 @@
-'use strict';
+import copier from '../../src/components/copier';
 
-var fbp = require('../..');
+describe('copier', () => {
+  it('should copy multiple IPs', () => {
+    const scaffold = new ComponentScaffold({
+        inports: {
+          IN: [1, 2, 3, 4, 5]
+        },
+        outports: {
+          OUT: [1, 2, 3, 4, 5]
+        },
+        droppedIPs: []
+      }
+    );
 
-describe('copier', function () {
-  it('should copy multiple IPs', function (done) {
-    var network = new fbp.Network();
-
-    var result = [];
-
-    var sender = network.defProc(MockSender.generator([1, 2, 3, 4, 5]), "sender");
-    var copier = network.defProc('./components/copier.js', "copier");
-    var receiver = network.defProc(MockReceiver.generator(result), "receiver");
-
-    network.connect(sender, 'OUT', copier, 'IN');
-    network.connect(copier, 'OUT', receiver, 'IN');
-
-    network.run(new fbp.FiberRuntime(), {trace: false}, function () {
-      expect(result).to.deep.equal([1, 2, 3, 4, 5]);
-      done();
-    });
+    scaffold.run(copier);
+    scaffold.verifyOutputs(expect);
+    scaffold.verifyDroppedIPs(expect);
+    scaffold.runTests(it);
   });
 });

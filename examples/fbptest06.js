@@ -1,9 +1,9 @@
-var fbp = require('..');
+var fbp = require('../src');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
-var gendata = network.defProc('./examples/components/gendata', 'Gen');
+var gendata = network.defProc('/components/gendata', 'Gen');
 var repl = network.defProc('./components/repl.js', 'Repl');
 var rrmerge = network.defProc('./components/rrmerge', 'RRMerge');
 var recvr = network.defProc('./components/recvr', 'Recvr');
@@ -16,5 +16,5 @@ network.connect(repl, 'OUT[2]', rrmerge, 'IN[2]', 5);
 network.connect(rrmerge, 'OUT', recvr, 'IN', 5);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

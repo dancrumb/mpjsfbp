@@ -2,8 +2,10 @@ language: node_js
 node_js:
   - "0.12"
   - "4.3"
-addons:
-    code_climate:
-        repo_token: 0d5dc2c8ee0457adf2b7109a58e2de3decd41b105743f36a6b9c66f8860ecf56
-after_script:
-  - codeclimate-test-reporter < ./coverage/lcov.info
+
+before_script:
+  - npm run-script buildMochaOpts
+
+script:
+  - npm run-script lint
+  - npm test

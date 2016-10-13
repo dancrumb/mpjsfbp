@@ -1,9 +1,9 @@
 var fbp = require('../..');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
-var receiver = network.defProc(require('../../components/wsrecv'));
+var receiver = network.defProc(require('/components/wsrecv'));
 var simproc = network.defProc(require('./wssimproc'));
 var send = network.defProc(require('./wsbroadcast'));
 
@@ -13,5 +13,5 @@ network.connect(receiver, 'OUT', simproc, 'IN', 6);
 network.connect(simproc, 'OUT', send, 'IN', 6);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: true});
+
+network.run({trace: true});

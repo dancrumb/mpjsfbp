@@ -1,0 +1,54 @@
+import {
+  EventEmitter
+} from 'events';
+
+/**
+ * @extends EventEmitter
+ */
+class Port extends EventEmitter {
+  /**
+   *
+   * @param component {Component}
+   * @param portName {string}
+   */
+  constructor(component, portName) {
+    super();
+    if (component) {
+      this.processName = component.name;
+      this.component = component;
+    } else {
+      this.processName = '';
+    }
+    this.portName = portName;
+    this.closed = false;
+  }
+
+  /**
+   *
+   * @returns {string}
+   */
+  get name() {
+    return this.portName;
+  }
+
+  /**
+   *
+   * @returns {boolean}
+   */
+  isOpen() {
+    return !this.closed;
+  }
+
+  /**
+   *
+   * @fires Port#portClosed
+   */
+  close() {
+    if (!this.closed) {
+      this.closed = true;
+      this.emit('portClosed');
+    }
+  }
+}
+
+export default Port;

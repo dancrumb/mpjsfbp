@@ -1,6 +1,6 @@
 'use strict';
 
-//var fbp = require('..')
+//var fbp = require('../src')
 //  , InputPort = require('../core/InputPort')
 //  , IP = require('../core/IP')
 //  , OutputPort = require('../core/OutputPort');

@@ -6,4 +6,7 @@ test/components/goodbye-world.txt
 examples/data/text_new.txt
 examples/isolate-*-v8.log
 
+test/mocha.opts
 coverage/
+lib/
+docs/

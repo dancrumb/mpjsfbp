@@ -37,10 +37,10 @@ Test cases so far:
 - `fbptestvl` -  Volume test (see below): `gendata` -> `copier` -> `discard`  
 -  `testsubstreamsensitivesplitting.js` - Test substream-sensitive logic in `lbal`, feeding `substreamsensitivemerge.js`
 
-"Update" networks
-----------
+# "Update" networks
+
 - `update`    -  "Update" run, demonstrating use of `collate.js` 
-- `update_c`  -  Same as `update.js` but routing output to a `compare` process, rather than to `display`
+- `update_c`  -  Same as `update.js` but routing output to a `compare` componentProvider, rather than to `display`
   
 The following diagram shows `update` and `update_c` in one diagram using the DrawFBP Enclosure function - this is not really a valid DrawFBP diagram, so no port names are shown:
 
@@ -50,8 +50,7 @@ Here is `update_c` by itself, with component and port names marked in - it conta
 
 ![update_c](https://cloud.githubusercontent.com/assets/312871/12379403/ffb3d6ea-bd27-11e5-9f56-1a8e4758dc1d.png "Diagram showing update_c.js")
  
-WebSockets
-----
+# WebSockets
 
 - `fbptestws` -  Schematic web socket server (simple Process shown can be replaced by any structure of Processes, provided interfaces are adhered to)
 
@@ -69,7 +68,7 @@ These tests (except for `fbptestws`) can be run sequentially by running `fbptest
 - `concat`  - concatenates all the streams that are sent to its array input port (size determined in network definition) 
 - `copier`  - copies its input stream to its output stream
 - `copier_closing` - forces close of input port after 20 IPs
-- `copier_nonlooper` - same as `copier`, except that it is written as a non-looper (it has been modified to call the FBP services from lower in the process's stack)
+- `copier_nonlooper` - same as `copier`, except that it is written as a non-looper (it has been modified to call the FBP services from lower in the componentProvider's stack)
 - `discard` - discard (drop) all incoming IPs
 - `display` - display all incoming IPs, including bracket IPs
 - `gendata`  - sends as many IPs to its output port as are specified by its COUNT IIP (each just contains the current count)
@@ -99,14 +98,13 @@ Networks can be generated programmatically or by loading in an FBP file.
 1. Get access to JSFBP: `var fbp = require('fbp')`
 2. Create a new network: `var network = new fbp.Network();`
 3. Define your network:
- - Add processes: `network.defProc(...)`  Note: when several processes use the same component, `defProc` takes the process name as a second argument. 
+ - Add processes: `network.defProc(...)`  Note: when several processes use the same component, `defProc` takes the componentProvider name as a second argument. 
  - Connect output ports to input ports: `network.connect(...)`
  - Specify IIPs: `network.initialize(...)`
-4. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
-5. Run it!
+4. Run it!
  
 ```
-network.run(fiberRuntime, {trace: true/false}, function success() {
+network.run({trace: true/false}, function success() {
     console.log("Finished!");
   });
 ```
@@ -121,7 +119,7 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 5. Create a new runtime: `var fiberRuntime = new fbp.FiberRuntime();`
 6. Run it!
 ```
-network.run(fiberRuntime, {trace: true/false}, function success() {
+network.run({trace: true/false}, function success() {
     console.log("Finished!");
   });
 ```
@@ -129,9 +127,9 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 
  Activating `trace` can be desired in debugging scenarios.
 
- ### Useful methods
+### Useful methods
  
-- `Network#defProc(component[, name])` Creates a process from a component, defined by the first parameter.
+- `Network#defProc(component[, name])` Creates a componentProvider from a component, defined by the first parameter.
   
   - The first parameter can be a function or a string. When a string is used, the component is loaded according to three
   possiblities:
@@ -150,25 +148,30 @@ network.run(fiberRuntime, {trace: true/false}, function success() {
 ## For component developers
 
 Component headers:
+
 `'use strict';`
 
-In most cases you do not need to *require()* any JSFBP-related scripts or libraries as a component developer. Everything you need is injected into the component's function as its context `this` (the process object) and as a parameter (the runtime object).
+In most cases you do not need to *require()* any JSFBP-related scripts or libraries as a 
+component developer. Everything you need is injected into the component's function as 
+its context `this` (the componentProvider object) and as a parameter (the runtime object).
+
 Some utility functions are stored in `core/utils.js`. Import them if you really need them.
-You should generally refrain from accessing runtime-related code (e.g. Fibers) to ensure the greatest compatibility.
+You should generally refrain from accessing runtime-related code (e.g. Fibers) to ensure 
+the greatest compatibility.
 
-Component services
+### Component services
 
-- In what follows, the `this` is only valid if the function is called from the component level; if called from a subroutine, pass in `this` as a parameter.
+In what follows, the `this` is only valid if the function is called from the component level; 
+if called from a subroutine, pass in `this` as a parameter.
 
 - `var ip = this.createIP(contents);` - create an IP containing `contents`
 - `var ip = this.createIPBracket(this.IPTypes.OPEN|this.IPTypes.CLOSE[, contents])` - create an open or close bracket IP
-- **Be sure** to include IP: `var IP = require('IP')` to gain access to the IP constants.
 - `this.dropIP(ip);` - drop IP
   
 - `var inport = this.openInputPort('IN');` - create InputPort variable  
-- `var array = this.openInputPortArray('IN');` - create input array port array
+- `var array = this.openInputPortArray('IN');` - create input array port array. This is a simple array of InputPorts
 - `var outport = this.openOutputPort('OUT');` - create OutputPort variable 
-- `var array = this.openOutputPortArray('OUT');` - create output array port array   
+- `var array = this.openOutputPortArray('OUT');` - create output array port array. This is a simple array of OutputPorts   
   
 - `var ip = inport.receive();` - returns null if end of stream 
 - `var ip = array[i].receive();` - receive to element of port array
@@ -188,10 +191,70 @@ runtime.runAsyncCallback(function (done) {
 });
 ```
 -  `Utils.getElementWithSmallestBacklog(array);` - used by `lbal` - not for general use 
-- **Be sure** to include Utils: `var Utils = require('core/utils')`.
+   - **Be sure** to include Utils: `var Utils = require('core/utils')`.
  
 -  `Utils.findInputPortElementWithData(array);` - used by `substreamsensitivemerge` - not for general use 
-- **Be sure** to include Utils: `var Utils = require('core/utils')`.
+   - **Be sure** to include Utils: `var Utils = require('core/utils')`.
+
+### Component testing
+
+The testing framework provides an object called `ComponentScaffold` to help test compoments.
+
+The basic format for a component test is:
+
+```javascript
+/* 
+   `component` is the Component under test
+   `expect` is the Chai `expect` object
+   `it` is the Mocha `it` function
+*/
+var scaffold = new ComponentScaffold({
+    iips: {
+        INPORT_NAME: IIP_value      
+    },
+    inports: {
+        INPORT_NAME: [ /* array of values for IPs to be received from this inport */ ]
+    },
+    outports: {
+        OUTPORT_NAME: [ /* array of values expected to be sent to this outport */ ]
+    },
+    droppedIPs: [ /* array of values for IPs that will be dropped */ ]
+  }
+);
+
+/* If the component does perform asynchronous I/O */
+scaffold.run(component, function () {
+  scaffold.verifyOutputs(expect);
+  scaffold.verifyDroppedIPs(expect);
+  scaffold.runTests(it);
+  done();
+});
+
+/* If the component does not perform asynchronous I/O */
+scaffold.run(component);
+scaffold.verifyOutputs(expect);
+scaffold.verifyDroppedIPs(expect);
+scaffold.runTests(it);
+```
+
+The `ComponentScaffold` is instantiated with: 
+- a list of IP values that will be available from inports.
+- a list of IP values that are expected to be received on each outport.
+- a list of IP values that the component will drop.
+ 
+IP values can be explicit IPs (or IP brackets) or simple values that are then converted
+to `NORMAL` IPs.
+
+You can also add a series of tests of the form:
+
+```javascript
+scaffold.tests = {
+  'test description': testFunction
+}
+```
+
+These are simply passed to Mocha's `it` function.
+
 
 # Install & Run
 
@@ -252,8 +315,7 @@ Just enter any string into the input field, and click on `Send`, and it will bro
 
 Click on the `Stop WS` button, and the network will come down.
 
-Tracing
----
+# Tracing
 
 Here is a sample section of the trace output for `fbptest08.js`:
 ```
@@ -282,13 +344,12 @@ recvr recv OK: to form different applications without having to be changed inter
 nally. FBP is
 ```
 
-Performance
----
+# Performance
 
 The volume test case (`fbptestvl`) with 100,000,000 IPs running through three processes took 164 seconds, on my machine 
 which has 4 AMD Phenom(tm) II X4 925 processors.  
 
-Since there are two connections, giving a total of 200,000,000 send/receive pairs, this works out to approx. 
+Since there are two upstreamConnections, giving a total of 200,000,000 send/receive pairs, this works out to approx. 
 0.82 microsecs per send/receive pair. Of course, as it is JavaScript, this test only uses 1 core intensively, 
 although there is some matching activity on the other cores (why...?!)
 

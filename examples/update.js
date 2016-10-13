@@ -1,8 +1,8 @@
-var fbp = require('..')
+var fbp = require('../src')
   , path = require('path');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var readerm = network.defProc('./components/reader', 'readerm');
 var readerd = network.defProc('./components/reader', 'readerd');
@@ -17,5 +17,5 @@ network.initialize(collate, 'CTLFIELDS', '3, 2, 5');
 network.connect(collate, 'OUT', display, 'IN');
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: false});
+
+network.run({trace: false});

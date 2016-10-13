@@ -7,7 +7,7 @@
  * It is a general component, but it seems appropriate to include it in examples/components
  *
  * Amusingly, I had forgotten that the input streams have to be drained - otherwise the compare
- * process will keep on getting reinvoked indefinitely.  The drainInputs logic has now been added.
+ * componentProvider will keep on getting reinvoked indefinitely.  The drainInputs logic has now been added.
  */
 
 module.exports = function compare() {

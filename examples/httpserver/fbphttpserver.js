@@ -1,7 +1,7 @@
 var fbp = require('../..');
 
 // --- define network ---
-var network = new fbp.Network();
+var network = new fbp.Network({ componentRoot: __dirname});
 
 var receiver = network.defProc(require('../../components/httpserver'));
 var myproc = network.defProc(require('./myproc'));
@@ -12,5 +12,5 @@ network.connect(receiver, 'OUT', myproc, 'IN', 6);
 network.connect(myproc, 'OUT', send, 'IN', 6);
 
 // --- run ---
-var fiberRuntime = new fbp.FiberRuntime();
-network.run(fiberRuntime, {trace: true});
+
+network.run({trace: true});
