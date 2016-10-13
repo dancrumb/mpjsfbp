@@ -5,6 +5,8 @@ import _ from 'lodash';
 import FBPProcess from './FBPProcess';
 import ProcessConnection from './ProcessConnection';
 import IIPConnection from './IIPConnection';
+import bunyan from 'bunyan';
+
 
 /*
  _connections Definition for component P with inports I,J and outport O
@@ -46,6 +48,10 @@ class Network {
     if (options) {
       this.componentRoot = options.componentRoot;
     }
+    this.log = bunyan.createLogger({
+      name: "Network"
+    });
+
   }
 
   /**
@@ -190,7 +196,7 @@ class Network {
     const upstreamConnections = this.getProcessConnections(upstreamProcessName);
     const processOutPorts = upstreamConnections.out;
     if (processOutPorts[upstreamPortName]) {
-      console.log(`Cannot connect one output port (${upstreamProcess}.${upstreamPortName}) to multiple input ports`);
+      this.log.info("Cannot connect one output port (%s.%s) to multiple input ports", upstreamProcess, upstreamPortName);
       return;
     }
 
@@ -299,19 +305,30 @@ class Network {
       });
 
       fbpProcess.on('statusChange', e => {
-        console.log(`{ "type": "statusChange", "newStatus": "${e.newStatus.name}", "name": "${e.name}" }`);
+        this.log.info({
+          "type": "statusChange",
+          "newStatus": e.newStatus.name,
+          "name": e.name
+        });
         fbpProcess.status = e.newStatus;
 
         let allInitialized = true;
         let allDone = true;
         _.forEach(network.processes, processContainer => {
-          console.log(`{ "type": "statusCheck", "name": "${processContainer.name}", "status": "${processContainer.status.name}"}`);
+          this.log.debug({
+            "type": "statusCheck",
+            "name": processContainer.name,
+            "status": processContainer.status.name
+          });
           allInitialized = allInitialized && processContainer.status.name === FBPProcessStatus.INITIALIZED.name;
           allDone = allDone && processContainer.status.name === FBPProcessStatus.DONE.name;
         });
 
         if (allInitialized) {
-          console.log(`{ "type": "networkMessage", "message": "All processes initialized - time to commence"}`);
+          this.log.info({
+            "type": "networkMessage",
+            "message": "All processes initialized - time to commence"
+          });
           _.forEach(network.processes, pc => {
             pc.commence();
           });

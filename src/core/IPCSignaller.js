@@ -11,7 +11,13 @@ export default function (type, details) {
 
   var sender = isFromProcessToComponent ? this.component : process;
 
-  console.log(`{ "type": "signalSentFrom${isFromProcessToComponent ? 'Process': 'Component'}", "id": "${messageId}", "messageType": "${type.name}", "name": "${this.name}", "details": ${JSON.stringify(details) || "null"}}`);
+  this.log.info({
+    "type": "signalSentFrom" + (isFromProcessToComponent ? 'Process' : 'Component'),
+    "id": messageId,
+    "messageType": type.name,
+    "name": this.name,
+    "details": details
+  });
   sender.send({
     type,
     id: messageId,

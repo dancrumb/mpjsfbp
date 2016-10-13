@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/jpaulm/jsfbp",
   "dependencies": {
+    "bunyan": "^1.8.1",
     "enumify": "^1.0.4",
     "fibers": "^1.0.5",
     "lodash": "^4.13.1",

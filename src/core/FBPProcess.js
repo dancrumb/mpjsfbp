@@ -5,7 +5,6 @@
 import {
   fork
 } from 'child_process';
-
 import {
   EventEmitter
 } from 'events';
@@ -15,6 +14,8 @@ import ProcessConnection from './ProcessConnection';
 import NullConnection from './NullConnection';
 import _ from 'lodash';
 import ipcSignaller from './IPCSignaller';
+import bunyan from 'bunyan';
+
 
 const signalHandlers = {
   IP_AVAILABLE(message) {
@@ -30,11 +31,17 @@ const signalHandlers = {
   IP_REQUESTED(message) {
     const details = message.details;
     if (this.status.name !== FBPProcessStatus.ACTIVE.name) {
-      console.log(`{ "type": "unexpectedMessage", "process": "${this.name}", "state": "${this.status.name}", "messageId": "${message.id}", "messageType": "${message.type.name}", "messageDetails": ${JSON.stringify(message.details)}}`);
+      this.log.error({
+        "type": "unexpectedMessage",
+        "process": this.name,
+        "state": this.status.name,
+        "messageId": message.id,
+        "messageType": message.type.name,
+        "messageDetails": message.details
+      });
       throw new Error("Received IP_REQUESTED unexpectedly");
     }
     this.setStatus(FBPProcessStatus.WAITING_TO_RECEIVE);
-    console.log(`Looking for a connection on ${details.port}`);
     var connectionForReceive = this.getConnectionForReceive(details.port);
 
     connectionForReceive.getIP((err, ip) => {
@@ -89,6 +96,10 @@ class FBPProcess extends EventEmitter {
     this.name = processDetails.name;
     this.status = FBPProcessStatus.NOT_INITIALIZED;
     this.component = fork(`${__dirname}/Component.js`);
+    this.log = bunyan.createLogger({
+      name: "FBPProcess (" + this.name + ")"
+    });
+
 
     this.openUpstreamProcesses = 0;
     this.upstreamConnections = {};
@@ -99,7 +110,7 @@ class FBPProcess extends EventEmitter {
     this.processDetails = processDetails;
 
     this.component.on('error', e => {
-      console.error('Process %s just died: %j', processDetails.name, e);
+      this.log.error('Process %s just died: %j', processDetails.name, e);
     });
 
 
@@ -107,16 +118,39 @@ class FBPProcess extends EventEmitter {
       const handler = signalHandlers[(message.type.name)];
 
       if (handler) {
-        console.log(`{ "type": "messageHandler", "receiver": "${this.name}", "messageId": "${message.id}", "messageType": "${message.type.name}", "messageDetails": ${JSON.stringify(message.details)} }`);
-        handler.call(this, message, this.component);
+        this.log.info({
+          "type": "messageHandler",
+          "receiver": this.name,
+          "messageId": message.id,
+          "messageType": message.type.name,
+          "messageDetails": JSON.stringify(message.details)
+        });
+        try {
+          handler.call(this, message, this.component);
+        } catch (e) {
+          this.log.error({
+            "type": "error",
+            "error": "messageHandlerFailure",
+            details: e
+          });
+          this.emit('error', e);
+        }
       } else {
-        console.log(`{"type":"error", "error": "Unknown message: ${JSON.stringify(message)}"}`);
+        this.log.error({
+          "type": "error",
+          "error": "Unknown message",
+          message: message
+        });
       }
     });
 
     this.on('processDormant', () => {
       var readyForShutdown = this.isReadyForShutdown();
-      console.log(`{ "type": "processDormant", "name": "${this.name}", "readyForShutdown": ${readyForShutdown} }`);
+      this.log.info({
+        "type": "processDormant",
+        "name": this.name,
+        "readyForShutdown": readyForShutdown
+      });
       if (readyForShutdown) {
         this.shutdownProcess();
       } else {
@@ -181,7 +215,6 @@ class FBPProcess extends EventEmitter {
 
   getConnectionForReceive(portName) {
     var portConnections = this.upstreamConnections[portName];
-    //console.log(portConnections);
     var connectionsWithData = _.filter(portConnections, (conn) => conn.hasData());
     if (connectionsWithData.length === 0) {
       var connectionsWithPotential = _.filter(portConnections, (conn) => conn.couldActivateAProcess());
@@ -197,7 +230,10 @@ class FBPProcess extends EventEmitter {
 
   commence() {
     if (this.openUpstreamProcesses === 0) {
-      console.log(`{"type": "selfStarting", "name": "${this.name}"}`);
+      this.log.info({
+        "type": "selfStarting",
+        "name": this.name
+      });
       this.activate();
     }
   }
@@ -228,7 +264,11 @@ class FBPProcess extends EventEmitter {
 
   setStatus(newStatus) {
     this.status = newStatus;
-    console.log(`{ "type": "setStatus", "name": "${this.name}", "newStatus": ${newStatus} }`);
+    this.log.info({
+      "type": "setStatus",
+      "name": this.name,
+      "newStatus": newStatus
+    });
 
 
     this.emit('statusChange', {

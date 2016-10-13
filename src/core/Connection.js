@@ -3,6 +3,7 @@ import {
   EventEmitter
 } from 'events';
 import IP from './IP';
+import bunyan from 'bunyan';
 
 /**
  *
@@ -18,6 +19,10 @@ class Connection extends EventEmitter {
 
     this.capacity = size;
     this.contents = new FIFO();
+
+    this.log = bunyan.createLogger({
+      name: "Connection"
+    });
 
     this.contents.on('fifoValueAdded', () => {
       this.emit('ipAvailable');
@@ -55,19 +60,36 @@ class Connection extends EventEmitter {
       const ip = this.contents.dequeue();
       this.contents.removeListener('fifoNoLongerEmpty', dequeuer);
       this.contents.removeListener('connectionCompleted', dequeuer);
-      console.log(`{ "type": "ipDequeue", "name": "${this.name}", "ip": ${ip}}`);
+      this.log.info({
+        "type": "ipDequeue",
+        "name": this.name,
+        "ip": ip
+      });
       callback(null, ip);
     };
 
-    console.log(`{ "type": "connectionState", "contents": ${JSON.stringify(this.contents.queue)}, "cursor": ${this.contents.cursor}, "length": ${this.contents.length}}`);
+    this.log.info({
+      "type": "connectionState",
+      "cursor": this.contents.cursor,
+      "length": this.contents.length
+    });
     if (!this.couldSendData()) {
-      console.log(`{ "type": "getIPResolution", "resolution": "dataDepleted"}`);
+      this.log.info({
+        "type": "getIPResolution",
+        "resolution": "dataDepleted"
+      });
       process.nextTick(() => callback(null, null));
     } else if (this.hasData()) {
-      console.log(`{ "type": "getIPResolution", "resolution": "dataAvailable"}`);
+      this.log.info({
+        "type": "getIPResolution",
+        "resolution": "dataAvailable"
+      });
       process.nextTick(dequeuer);
     } else {
-      console.log(`{ "type": "getIPResolution", "resolution": "waitingForData"}`);
+      this.log.info({
+        "type": "getIPResolution",
+        "resolution": "waitingForData"
+      });
       this.contents.once('fifoNoLongerEmpty', dequeuer);
       this.once('connectionCompleted', dequeuer);
     }
@@ -86,7 +108,11 @@ class Connection extends EventEmitter {
     const connectionContents = this.contents;
 
     var ipEnqueuer = () => {
-      console.log("Enqueuing %j", ip);
+      this.log.info({
+        "type": "ipEnqueue",
+        "name": this.name,
+        "ip": ip
+      });
       connectionContents.enqueue(ip);
       callback();
     };
@@ -113,7 +139,10 @@ class Connection extends EventEmitter {
    * @fires Connection#connectionCompleted
    */
   close() {
-    console.log(`{ "type": "closingConnection", "ips": ${this.pendingIPCount()}}`);
+    this.log.info({
+      "type": "closingConnection",
+      "ips": this.pendingIPCount()
+    });
     this.closed = true;
     this.emit('connectionClosed');
     if (this.contents.isEmpty()) {

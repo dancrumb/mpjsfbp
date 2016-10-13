@@ -6,6 +6,8 @@ import OutputPort from './OutputPort';
 import FBPProcessMessageType from './FBPProcessMessageType';
 import _ from 'lodash';
 import ipcSignaller from './IPCSignaller';
+import bunyan from 'bunyan';
+
 
 
 function replaceErrors(key, value) {
@@ -27,11 +29,18 @@ class Component extends PortManager {
     this.name = "UNNAMED";
     this.ownedIPs = 0;
     this.running = false;
+    this.log = bunyan.createLogger({
+      name: "Component (" + this.name + ")"
+    });
+
     const component = this;
 
     this.componentFiber = Fiber(() => {
       try {
-        console.log(`{ "type": "componentStart", "name": "${this.name}" }`);
+        this.log.info({
+          "type": "componentStart",
+          "name": this.name
+        });
         component.component.call(component);
         this.signal(FBPProcessMessageType.COMPONENT_COMPLETE);
         this.running = false;
@@ -55,7 +64,11 @@ class Component extends PortManager {
       try {
         this.component = require(initializationDetails.component.moduleLocation);
       } catch (e) {
-        console.log(`{ "type": "error", "name": "${this.name}", "reason": "Failure to load component module: ${initializationDetails.component.moduleLocation}" }`);
+        this.log.error({
+          "type": "error",
+          "name": this.name,
+          "reason": "Failure to load component module: " + initializationDetails.component.moduleLocation
+        });
         this.signal(FBPProcessMessageType.ERROR, e);
       }
       if (initializationDetails.component.componentField) {
@@ -69,7 +82,10 @@ class Component extends PortManager {
 
       process.on('message', this.handleMessage.bind(this));
 
-      console.log(`{ "type": "componentInitialized", "name": "${this.name}"}`);
+      this.log.info({
+        "type": "componentInitialized",
+        "name": this.name
+      });
       this.signal(FBPProcessMessageType.INITIALIZATION_COMPLETE);
     })
 
@@ -86,7 +102,10 @@ class Component extends PortManager {
         this.signal(FBPProcessMessageType.ERROR, e);
       }
     } else if (message.type.name === FBPProcessMessageType.PROCESS_COMPLETING.name) {
-      console.log(`{"type": "componentShutdown", "name": "${component.name}"}`);
+      this.log.info({
+        "type": "componentShutdown",
+        "name": component.name
+      });
       component.shutdown();
     }
   }
@@ -106,9 +125,20 @@ class Component extends PortManager {
 
       inputPort.on("ipRequested", e => {
         process.once('message', message => {
-          console.log(`{ "type": "ipRequestedResponseHandler", "receiver": "${this.name}", "messageId": "${message.id}", "messageType": "${message.type.name}", "messageDetails": ${JSON.stringify(message.details)} }`);
+          this.log.info({
+            "type": "ipRequestedResponseHandler",
+            "receiver": this.name,
+            "messageId": message.id,
+            "messageType": message.type.name,
+            "messageDetails": message.details
+          });
           if (message.type.name === FBPProcessMessageType.IP_INBOUND.name) {
-            console.log(`{ "type": "inboundIP", "process": "${initializationDetails.name}", "port": "${e.portName}", "message": ${message}}`);
+            this.log.info({
+              "type": "inboundIP",
+              "process": initializationDetails.name,
+              "port": e.portName,
+              "message": message
+            });
             const details = message.details;
             const ip = new IP();
             ip.type = details.ip.type;
@@ -116,7 +146,11 @@ class Component extends PortManager {
 
             component.componentFiber.run(ip);
           } else if (message.type.name === FBPProcessMessageType.EOS_INBOUND.name) {
-            console.log(`{ "type": "inboundEOS", "process": "${initializationDetails.name}", "port": "${e.portName}" }`);
+            this.log.info({
+              "type": "inboundEOS",
+              "process": initializationDetails.name,
+              "port": e.portName
+            });
             component.componentFiber.run(null);
           }
         });
@@ -204,7 +238,10 @@ class Component extends PortManager {
   }
 
   activate() {
-    console.log(`{ "type": "componentActivateRequest", "name": "${this.name}" }`);
+    this.log.info({
+      "type": "componentActivateRequest",
+      "name": this.name
+    });
     if (this.running) {
       throw new Error(`Attempted to activate an active FBP Process: ${this.name}`);
     }
@@ -225,9 +262,15 @@ class Component extends PortManager {
   }
 
   awaitResponse() {
-    console.log(`{ "type": "awaitingResponse", "name": "${this.name}" }`);
+    this.log.info({
+      "type": "awaitingResponse",
+      "name": this.name
+    });
     var response = Fiber.yield();
-    console.log(`{ "type": "responseReceived", "name": "${this.name}" }`);
+    this.log.info({
+      "type": "responseReceived",
+      "name": this.name
+    });
     return response;
   }
 

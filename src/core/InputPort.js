@@ -15,7 +15,7 @@ class InputPort extends Port {
     if (component) {
       component.addInputPort(this);
     } else {
-      console.log(`No component passed to input port: ${port}`);
+      this.log.info(`No component passed to input port: ${port}`);
     }
   }
 
@@ -25,9 +25,18 @@ class InputPort extends Port {
    */
   receive() {
     if (this.closed) {
-      console.log(`{ "type": "inputPortReceiveFromClosed", "port": "${this.name}", "component": "${this.component ? this.component.name : null}" }`);
+      this.log.info({
+        "type": "inputPortReceiveFromClosed",
+        "port": this.name,
+        "component": (this.component ? this.component.name : null)
+      });
       return null;
     }
+    this.log.info({
+      "type": "inputPortReceive",
+      "port": this.name,
+      "component": (this.component ? this.component.name : null)
+    });
 
     this.emit("ipRequested", {
       portName: this.name
@@ -35,7 +44,12 @@ class InputPort extends Port {
 
     let ip = this.component.awaitResponse();
 
-    console.log(`{"type": "ipReceivedAtInputPort", "port": "${this.name}", "component": "${this.component.name}" "ip": ${ip? ip : null}}`);
+    this.log.info({
+      "type": "ipReceivedAtInputPort",
+      "port": this.name,
+      "component": this.component.name,
+      "ip": (ip ? ip : {})
+    });
 
     if (!ip) {
       ip = null;

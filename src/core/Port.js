@@ -1,6 +1,8 @@
 import {
   EventEmitter
 } from 'events';
+import bunyan from 'bunyan';
+
 
 /**
  * @extends EventEmitter
@@ -20,6 +22,10 @@ class Port extends EventEmitter {
       this.processName = '';
     }
     this.portName = portName;
+    this.log = bunyan.createLogger({
+      name: "Port (" + this.processName + "." + this.portName + ")"
+    });
+
     this.closed = false;
   }
 
