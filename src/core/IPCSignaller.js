@@ -7,7 +7,7 @@ import {
 export default function (type, details) {
   var isFromProcessToComponent = (this.component && (this.component instanceof ChildProcess));
 
-  var messageId = `${this.name}-${isFromProcessToComponent ? "P" : "C"}-${(new Date).getTime()}`;
+  var messageId = `${this.name}-${isFromProcessToComponent ? "P" : "C"}-${(new Date).getTime()}-${Math.round(Math.random()*1000)}`;
 
   var sender = isFromProcessToComponent ? this.component : process;
 

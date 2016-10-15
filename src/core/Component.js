@@ -124,6 +124,11 @@ class Component extends PortManager {
       });
 
       inputPort.on("ipRequested", e => {
+        this.log.info({
+          "type": "ipRequestedFromInputPort",
+          "port": inputPort.portName,
+          "event": e
+        });
         process.once('message', message => {
           this.log.info({
             "type": "ipRequestedResponseHandler",
@@ -144,14 +149,14 @@ class Component extends PortManager {
             ip.type = details.ip.type;
             ip.contents = details.ip.contents;
 
-            component.componentFiber.run(ip);
+            this.returnResponse(ip);
           } else if (message.type.name === FBPProcessMessageType.EOS_INBOUND.name) {
             this.log.info({
               "type": "inboundEOS",
               "process": initializationDetails.name,
               "port": e.portName
             });
-            component.componentFiber.run(null);
+            this.returnResponse(null);
           }
         });
 
@@ -182,7 +187,7 @@ class Component extends PortManager {
       outputPort.on("ipSubmitted", e => {
         process.once('message', message => {
           if (message.type.name === FBPProcessMessageType.IP_ACCEPTED.name) {
-            component.componentFiber.run();
+            this.returnResponse();
           }
         });
 
@@ -232,7 +237,7 @@ class Component extends PortManager {
     this.signal(FBPProcessMessageType.ASYNC_CALLBACK);
     callback((results) => {
       this.signal(FBPProcessMessageType.CALLBACK_COMPLETE);
-      this.componentFiber.run(results);
+      this.returnResponse(results);
     });
     return this.awaitResponse();
   }
@@ -246,7 +251,7 @@ class Component extends PortManager {
       throw new Error(`Attempted to activate an active FBP Process: ${this.name}`);
     }
     this.running = true;
-    this.componentFiber.run();
+    this.returnResponse();
   }
 
   shutdown() {
@@ -272,6 +277,14 @@ class Component extends PortManager {
       "name": this.name
     });
     return response;
+  }
+
+  returnResponse(response) {
+    this.log.info({
+      "type": "returnResponse",
+      "response": response
+    });
+    this.componentFiber.run(response);
   }
 
   signal(type, details) {

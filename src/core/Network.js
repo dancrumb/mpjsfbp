@@ -336,6 +336,7 @@ class Network {
 
         if (allDone) {
           _.forEach(network.processes, (process) => process.terminate());
+          this.log.info("All processes completed cleanly");
           callback();
         }
       });

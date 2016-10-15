@@ -59,7 +59,7 @@ class Connection extends EventEmitter {
     const dequeuer = () => {
       const ip = this.contents.dequeue();
       this.contents.removeListener('fifoNoLongerEmpty', dequeuer);
-      this.contents.removeListener('connectionCompleted', dequeuer);
+      this.removeListener('connectionCompleted', dequeuer);
       this.log.info({
         "type": "ipDequeue",
         "name": this.name,

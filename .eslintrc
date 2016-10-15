@@ -16,7 +16,6 @@
     "es2015/node"
   ],
   "rules": {
-    "no-console": 0,
     "no-constant-condition": 0
   }
 }
