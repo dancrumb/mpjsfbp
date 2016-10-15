@@ -151,6 +151,7 @@ class FBPProcess extends EventEmitter {
         "name": this.name,
         "readyForShutdown": readyForShutdown
       });
+
       if (readyForShutdown) {
         this.shutdownProcess();
       } else {

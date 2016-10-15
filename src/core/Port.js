@@ -46,6 +46,13 @@ class Port extends EventEmitter {
   }
 
   /**
+   * Opens a Port
+   */
+  open() {
+    this.closed = false;
+  }
+
+  /**
    *
    * @fires Port#portClosed
    */

@@ -40,6 +40,7 @@ function getPortArray(ports, portName) {
 function portOpener(ports, direction, name, opt) {
   var port = ports[name];
   if (port) {
+    port.open();
     return port;
   } else {
     if (direction === 'OUT' && opt != 'OPTIONAL') {

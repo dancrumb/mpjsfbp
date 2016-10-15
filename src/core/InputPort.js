@@ -24,8 +24,11 @@ class InputPort extends Port {
   }
 
   /**
+   * Receives an IP from the InputPort.
    *
-   * @returns {IP|null}
+   * This is a fiber-blocking call, so the called will see it as synchronous.
+   *
+   * @returns {IP|null} `null` is returned if the incoming stream of IPs is at its end. Otherwise an IP will be returned
    */
   receive() {
     this.log.info({
@@ -34,6 +37,7 @@ class InputPort extends Port {
       "port": this.name,
       "component": this.componentName()
     });
+
     if (this.closed) {
       return null;
     }
