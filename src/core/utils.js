@@ -1,13 +1,14 @@
-'use strict';
-
-var Fiber = require('fibers'),
-  ProcessStatus = require('./Component').Status;
+import Fiber from 'fibers';
+import _ from 'lodash';
+import {
+  Status as ProcessStatus
+} from './Component';
 
 function getInportWithData(inportArray) {
-  var allDrained = true;
+  let allDrained = true;
 
-  var inportElementWithData = inportArray.findIndex(function (inport) {
-    var conn = inport ? inport.conn : false;
+  let inportElementWithData = inportArray.findIndex(inport => {
+    const conn = inport ? inport.conn : false;
     if (!conn) {
       return false;
     } else if (conn.usedslots > 0) { // connection has data
@@ -19,7 +20,7 @@ function getInportWithData(inportArray) {
   });
 
   if (inportElementWithData >= 0) {
-    console.log('findIPE_with_data - found: ' + inportElementWithData);
+    console.log(`findIPE_with_data - found: ${inportElementWithData}`);
   } else if (allDrained) {
     console.log('findIPE_with_data: all drained');
   } else {
@@ -27,37 +28,38 @@ function getInportWithData(inportArray) {
   }
 
   return {
-    inportElementWithData: inportElementWithData,
-    allDrained: allDrained
+    inportElementWithData,
+    allDrained
   };
 }
 
-module.exports.getElementWithSmallestBacklog = function (array, elem) {
-  var number = Number.MAX_VALUE;
-  var element = elem;
-  if (element == -1) {
+/*
+ * Takes and array and creates a new array that starts at the `wrapPoint` in the old array and wraps around when
+ * it reaches the end
+ *
+ * For instance: `array = [1,2,3,4,5]`, `wrapPoint = 2`
+ * Gives: `[3,4,5,1,2]`
+ */
+var wrapArray = (array, wrapPoint) => array.slice(wrapPoint).concat(array.slice(0, wrapPoint));
+
+export function getElementWithSmallestBacklog(portArray, startIndex) {
+  let number = Number.MAX_VALUE;
+  let element = startIndex;
+  if (element === -1) {
     element = 0;
   }
-  var j = element;
-  for (var i = 0; i < array.length; i++) {
-    if (array[j] == null || array[j] == undefined)
-      continue;
-    if (number > array[j].conn.usedslots) {
-      number = array[j].conn.usedslots;
-      element = j;
-    }
-    j = (j + 1) % array.length;
-  }
-  return element;
-};
+  let j = element;
 
-module.exports.findInputPortElementWithData = function (array) {
-  var proc = Fiber.current.fbpProc;
+  return _.minBy(wrapArray(portArray, startIndex), 'getConnectionDepth');
+}
+
+export function findInputPortElementWithData(array) {
+  const proc = Fiber.current.fbpProc;
 
   console.log('findIPE_with_data ');
 
   while (true) {
-    var inportWitData = getInportWithData(array);
+    const inportWitData = getInportWithData(array);
 
     if (inportWitData.inportElementWithData !== null) {
       return inportWitData.inportElementWithData;
@@ -65,4 +67,4 @@ module.exports.findInputPortElementWithData = function (array) {
 
     proc.yield(ProcessStatus.WAITING_TO_FIPE);
   }
-};
+}

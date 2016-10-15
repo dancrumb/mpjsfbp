@@ -1,26 +1,26 @@
-'use strict';
+import {
+  getElementWithSmallestBacklog
+} from '../core/Utils';
 
-var Utils = require('../core/Utils');
-
-module.exports = function lbal() {
-  var inport = this.openInputPort('IN');
-  var array = this.openOutputPortArray('OUT');
-  var sel = -1;
-  var substream_level = 0;
+export default function lbal() {
+  const inport = this.openInputPort('IN');
+  const array = this.openOutputPortArray('OUT');
+  let selectedPort = null;
+  let substream_level = 0;
   while (true) {
-    var ip = inport.receive();
+    const ip = inport.receive();
     if (ip === null) {
       break;
     }
 
     if (substream_level == 0) {
-      sel = Utils.getElementWithSmallestBacklog(array, sel);
+      selectedPort = getElementWithSmallestBacklog(array, selectedPort);
     }
     if (ip.type == this.IPTypes.OPEN)
       substream_level++;
     else if (ip.type == this.IPTypes.CLOSE)
       substream_level--;
 
-    array[sel].send(ip);
+    selectedPort.send(ip);
   }
 };

@@ -123,6 +123,18 @@ class Component extends PortManager {
         });
       });
 
+      inputPort.on('connectionDepthRequest', e => {
+        process.once('message', message => {
+          if (message.type.name === FBPProcessMessageType.CONNECTION_DEPTH.name) {
+            this.returnResponse(message.details.depth);
+          }
+        });
+        this.signal(FBPProcessMessageType.CONNECTION_DEPTH_REQUEST, {
+          process: component.name,
+          port: inputPort.portName
+        });
+      });
+
       inputPort.on("ipRequested", e => {
         this.log.info({
           "type": "ipRequestedFromInputPort",
@@ -179,6 +191,18 @@ class Component extends PortManager {
 
       outputPort.on('portClosed', () => {
         this.signal(FBPProcessMessageType.PORT_CLOSURE, {
+          process: component.name,
+          port: outputPort.portName
+        });
+      });
+
+      outputPort.on('connectionDepthRequest', e => {
+        process.once('message', message => {
+          if (message.type.name === FBPProcessMessageType.CONNECTION_DEPTH.name) {
+            this.returnResponse(message.details.depth);
+          }
+        });
+        this.signal(FBPProcessMessageType.CONNECTION_DEPTH_REQUEST, {
           process: component.name,
           port: outputPort.portName
         });

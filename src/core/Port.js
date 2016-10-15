@@ -62,6 +62,15 @@ class Port extends EventEmitter {
       this.emit('portClosed');
     }
   }
+
+  /**
+   * @returns {number} the total number of IPs associated with this Port. Could be IPs waiting to come int
+   * or IPs in the downstream connection.
+   */
+  getConnectionDepth() {
+    this.emit('connectionDepthRequest');
+    return this.component.awaitResponse();
+  }
 }
 
 export default Port;

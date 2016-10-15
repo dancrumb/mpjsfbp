@@ -77,6 +77,14 @@ const signalHandlers = {
     _.invokeMap(upstreamConnections, 'close');
     _.invokeMap(downstreamConnection, 'close');
   },
+  CONNECTION_DEPTH_REQUEST(message) {
+    var upstreamConnections = this.upstreamConnections[message.port];
+    var downstreamConnection = this.downstreamConnections[message.port];
+    var depth = _.sumBy(upstreamConnections.concat(downstreamConnection), 'pendingIPCount');
+    this.signal(FBPProcessMessageType.CONNECTION_DEPTH, {
+      depth
+    });
+  },
   ERROR(message) {
     this.emit('error', message.details);
   }
