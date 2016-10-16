@@ -9,4 +9,5 @@ examples/isolate-*-v8.log
 test/mocha.opts
 coverage/
 lib/
+lib-examples/
 docs/

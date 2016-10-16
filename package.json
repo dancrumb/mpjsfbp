@@ -61,7 +61,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "compile": "babel --source-maps  --presets es2015 --plugins add-module-exports -d lib/ src/",
+    "build-lib": "babel --source-maps  --presets es2015 --plugins add-module-exports -d lib/ src/",
+    "build-examples": "babel --source-maps  --presets es2015 --plugins add-module-exports -d lib-examples/ examples/",
     "buildMochaOpts": "babel-node buildMochaOpts.js > test/mocha.opts",
     "test": "babel-node node_modules/.bin/isparta cover _mocha",
     "generate-docs": "jsdoc -c jsdoc.json -R README.md",
