@@ -3,6 +3,8 @@ node_js:
   - "0.12"
   - "4.3"
 
+before_install: if [[ `npm -v` != 3* ]]; then npm i -g npm@3; fi
+
 before_script:
   - npm run-script buildMochaOpts
   - npm install -g codeclimate-test-reporter
