@@ -1,5 +1,5 @@
 import Connection from './Connection';
-import IP from './IP';
+import Promise from 'bluebird';
 
 /**
  * @extends Connection
@@ -15,11 +15,11 @@ class NullConnection extends Connection {
 
   /**
    *
-   * @param callback
+   * @returns {Promise.<null>}
    */
-  getIP(callback) {
+  getIP() {
     console.log(`{ "type": "getIPResolution", "resolution": "EOS"}`);
-    callback(null, null);
+    return Promise.resolve(null);
   }
 }
 

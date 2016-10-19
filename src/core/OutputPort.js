@@ -1,12 +1,11 @@
 import Port from './Port';
-import Fiber from 'fibers';
 
 /**
  * @extends Port
  */
 class OutputPort extends Port {
-  constructor(process, port) {
-    super(process, port);
+  constructor(process, port, otherEnd) {
+    super(process, port, otherEnd);
     process.addOutputPort(this);
   }
 
@@ -15,12 +14,7 @@ class OutputPort extends Port {
    * @param ip {IP}
    */
   send(ip) {
-    this.emit("ipSubmitted", {
-      portName: this.name,
-      ip
-    });
-
-    this.component.awaitResponse();
+    this.component.submitIP(ip);
   }
 }
 

@@ -5,7 +5,7 @@
 import InputPort  from '../../src/core/InputPort';
 
 
-describe('InputPort', function() {
+describe.skip('InputPort', function() {
 
   it('automatically adds itself to a componentProvider on instantiation', () => {
     var fakeComponent = {

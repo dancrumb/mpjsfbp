@@ -5,6 +5,7 @@ module.exports = function recvr() {
   while (true) {
     var ip = inport.receive();
     if (ip === null) {
+      console.log("EOS");
       break;
     }
     if (ip.type == this.IPTypes.OPEN)

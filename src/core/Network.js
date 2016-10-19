@@ -5,7 +5,8 @@ import _ from 'lodash';
 import FBPProcess from './FBPProcess';
 import ProcessConnection from './ProcessConnection';
 import IIPConnection from './IIPConnection';
-import bunyan from 'bunyan';
+import bunyan from './bunyan-stub';
+import getUID from './uid';
 
 
 /*
@@ -45,6 +46,9 @@ class Network {
     this._processes = {};
 
     this._connections = {};
+
+    this.id = getUID();
+
     if (options) {
       this.componentRoot = options.componentRoot;
     }
@@ -290,13 +294,14 @@ class Network {
 
 
     this.processes = _.reduce(networkProcesses, (processes, details, processName) => {
-      const ports = network.getProcessPortNames(processName);
+      const ports = network.getProcessConnections(processName);
 
       const fbpProcess = new FBPProcess({
         name: processName,
         component: details.location,
         in: ports.in,
-        out: ports.out
+        out: ports.out,
+        networkId: network.id
       });
 
       fbpProcess.on('error', e => {
@@ -313,6 +318,7 @@ class Network {
         fbpProcess.status = e.newStatus;
 
         let allInitialized = true;
+        let allReady = true;
         let allDone = true;
         _.forEach(network.processes, processContainer => {
           this.log.debug({
@@ -321,10 +327,18 @@ class Network {
             "status": processContainer.status.name
           });
           allInitialized = allInitialized && processContainer.status.name === FBPProcessStatus.INITIALIZED.name;
+          allReady = allReady && processContainer.status.name === FBPProcessStatus.READY.name;
           allDone = allDone && processContainer.status.name === FBPProcessStatus.DONE.name;
         });
 
         if (allInitialized) {
+          _.forEach(network.processes, pc => {
+            const ports = network.getProcessConnections(pc.name);
+            pc.connect(ports);
+          });
+        }
+
+        if (allReady) {
           this.log.info({
             "type": "networkMessage",
             "message": "All processes initialized - time to commence"

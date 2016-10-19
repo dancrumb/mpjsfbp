@@ -4,7 +4,7 @@
 
 import {
   fork
-} from 'child_process';
+} from 'child-process-debug';
 import {
   EventEmitter
 } from 'events';
@@ -14,7 +14,7 @@ import ProcessConnection from './ProcessConnection';
 import NullConnection from './NullConnection';
 import _ from 'lodash';
 import ipcSignaller from './IPCSignaller';
-import bunyan from 'bunyan';
+import bunyan from './bunyan-stub';
 
 
 const signalHandlers = {
@@ -23,7 +23,7 @@ const signalHandlers = {
     const connection = this.downstreamConnections[details.port][0];
 
     this.setStatus(FBPProcessStatus.WAITING_TO_SEND);
-    connection.putIP(details.ip, () => {
+    connection.putIP(details.ip).then(() => {
       this.setStatus(FBPProcessStatus.ACTIVE);
       this.ipAccepted();
     })
@@ -44,7 +44,7 @@ const signalHandlers = {
     this.setStatus(FBPProcessStatus.WAITING_TO_RECEIVE);
     var connectionForReceive = this.getConnectionForReceive(details.port);
 
-    connectionForReceive.getIP((err, ip) => {
+    connectionForReceive.getIP().then((ip) => {
       this.setStatus(FBPProcessStatus.ACTIVE);
       if (ip === null) {
         this.signal(FBPProcessMessageType.EOS_INBOUND, {
@@ -61,6 +61,9 @@ const signalHandlers = {
   },
   INITIALIZATION_COMPLETE(message) {
     this.setStatus(FBPProcessStatus.INITIALIZED);
+  },
+  CONNECTION_COMPLETE(message) {
+    this.setStatus(FBPProcessStatus.READY);
   },
   COMPONENT_COMPLETE(message) {
     this.setStatus(FBPProcessStatus.DORMANT);
@@ -199,6 +202,10 @@ class FBPProcess extends EventEmitter {
     this.signal(FBPProcessMessageType.INITIALIZE, this.processDetails);
   }
 
+  connect(connections) {
+    this.signal(FBPProcessMessageType.CONNECT, connections);
+  }
+
   /**
    *
    * @param portName
@@ -297,7 +304,7 @@ class FBPProcess extends EventEmitter {
   }
 
   activate() {
-    if ((this.status !== FBPProcessStatus.DORMANT) && (this.status !== FBPProcessStatus.INITIALIZED)) {
+    if ((this.status !== FBPProcessStatus.DORMANT) && (this.status !== FBPProcessStatus.READY)) {
       throw new Error("Tried to activate a Process that cannot be activated");
     }
 

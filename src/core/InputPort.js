@@ -1,4 +1,7 @@
 import Port from './Port';
+import Promise from 'bluebird';
+import _ from 'lodash';
+import IIPConnection from './IIPConnection';
 
 /**
  * @extends Port
@@ -7,16 +10,26 @@ class InputPort extends Port {
   /**
    *
    * @param {Component} component
-   * @param port
+   * @param {string} portName
+   * @param {*} otherEnds
    */
-  constructor(component, port) {
-    super(component, port);
+  constructor(component, portName, otherEnds) {
+    super(component, portName, otherEnds);
 
     if (component) {
       component.addInputPort(this);
     } else {
-      this.log.info(`No component passed to input port: ${port}`);
+      this.log.info(`No component passed to input port: ${portName}`);
     }
+
+    _.forEach(otherEnds, (otherEnd) => {
+      if (otherEnd.data) {
+        this.connections.push(new IIPConnection(otherEnd.data));
+      } else {
+        this.connections.push(new RemoteProcessConnection(otherEnd.process, otherEnd.port))
+      }
+
+    })
   }
 
   componentName() {
@@ -39,26 +52,28 @@ class InputPort extends Port {
     });
 
     if (this.closed) {
-      return null;
+      return Promise.resolve(null);
     }
 
-    this.emit("ipRequested", {
-      portName: this.name
+    return new Promise((resolve, reject) => {
+      this.emit("ipRequested", {
+        portName: this.name
+      });
+
+      let ip = this.component.requestIP(this);
+
+      this.log.info({
+        "type": "ipReceivedAtInputPort",
+        "port": this.name,
+        "component": this.component.name,
+        "ip": (ip ? ip : {})
+      });
+
+      if (!ip) {
+        ip = null;
+      }
+      resolve(ip);
     });
-
-    let ip = this.component.awaitResponse();
-
-    this.log.info({
-      "type": "ipReceivedAtInputPort",
-      "port": this.name,
-      "component": this.component.name,
-      "ip": (ip ? ip : {})
-    });
-
-    if (!ip) {
-      ip = null;
-    }
-    return ip;
   }
 }
 

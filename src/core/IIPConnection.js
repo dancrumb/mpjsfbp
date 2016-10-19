@@ -24,14 +24,10 @@ class IIPConnection extends Connection {
     return false;
   }
 
-  /**
-   *
-   * @param callback
-   */
-  getIP(callback) {
-    super.getIP((err, ip) => {
+  getIP() {
+    return super.getIP().then((ip) => {
       this.close();
-      callback(err, ip);
+      return ip;
     });
   }
 

@@ -1,12 +1,18 @@
-import Fiber from 'fibers';
 import IP from './IP';
 import PortManager from './PortManager';
 import InputPort from './InputPort';
 import OutputPort from './OutputPort';
 import FBPProcessMessageType from './FBPProcessMessageType';
+import FBPProcessStatus from './FBPProcessStatus';
 import _ from 'lodash';
 import ipcSignaller from './IPCSignaller';
-import bunyan from 'bunyan';
+import bunyan from './bunyan-stub';
+import Promise from 'bluebird';
+import 'babel-polyfill';
+import ipc from 'node-ipc';
+import eventToPromise from 'event-to-promise'
+
+
 
 
 
@@ -33,9 +39,13 @@ class Component extends PortManager {
       name: "Component (" + this.name + ")"
     });
 
+    this.ipcConnections = {};
+
+    this.state = FBPProcessStatus.NOT_INITIALIZED;
+
     const component = this;
 
-    this.componentFiber = Fiber(() => {
+    this.componentRoutine = Promise.coroutine(function* () {
       try {
         this.log.info({
           "type": "componentStart",
@@ -51,15 +61,20 @@ class Component extends PortManager {
       }
     });
 
-    process.once('message', message => {
+
+    const initializeComponent = message => {
       if (message.type.name !== FBPProcessMessageType.INITIALIZE.name) {
         throw new Error("Uninitialized Component received message that wasn't 'INITIALIZE'");
       }
       if (this.component) {
         throw new Error("INITIALIZE received by initialized component");
       }
+      this.log.info("initializingComponent");
+
       const initializationDetails = message.details;
+      this.log.info(initializationDetails);
       this.name = initializationDetails.name;
+      this.networkId = initializationDetails.networkId;
 
       try {
         this.component = require(initializationDetails.component.moduleLocation);
@@ -76,18 +91,46 @@ class Component extends PortManager {
       }
 
 
-
-      this.initializeInPorts(initializationDetails);
-      this.initializeOutPorts(initializationDetails);
-
       process.on('message', this.handleMessage.bind(this));
 
-      this.log.info({
-        "type": "componentInitialized",
-        "name": this.name
+      ipc.config.id = this.networkId + ':' + this.name;
+
+      ipc.serve();
+
+      ipc.server.on('start', () => {
+        this.log.info({
+          "type": "componentInitialized",
+          "name": this.name
+        });
+        this.state = FBPProcessStatus.INITIALIZED;
+        this.signal(FBPProcessMessageType.INITIALIZATION_COMPLETE);
       });
-      this.signal(FBPProcessMessageType.INITIALIZATION_COMPLETE);
-    })
+
+      ipc.server.start();
+
+    };
+
+    const initializeConnections = (message) => {
+      if (message.type.name !== FBPProcessMessageType.CONNECT.name) {
+        throw new Error("Unconnected Component received message that wasn't 'CONNECT'");
+      }
+      if (this.status !== FBPProcessMessageType.INITIALIZED) {
+        throw new Error("CONNECT request recieved for a Component not in the INITIALIZED state");
+      }
+      const connectionDetails = message.details;
+      this.initializeInPorts(connectionDetails);
+      this.initializeOutPorts(connectionDetails);
+      this.state = FBPProcessStatus.READY;
+      this.signal(FBPProcessMessageType.CONNECTION_COMPLETE);
+    };
+
+    eventToPromise(process, 'message').then((message) => {
+      initializeComponent(message);
+      return eventToPromise(process, 'message');
+    }).then((message) => {
+      initializeConnections(message);
+    });
+    //process.once('message', initializeComponent)
 
   }
 
@@ -113,8 +156,11 @@ class Component extends PortManager {
   initializeInPorts(initializationDetails) {
     const component = this;
 
-    initializationDetails.in.forEach(portName => {
-      const inputPort = new InputPort(component, portName);
+    _.forEach(initializationDetails.in, (portDetails, portName) => {
+      const inputPort = new InputPort(component, portName, portDetails);
+
+      console.log("PortDetails: %j", portDetails);
+
 
       inputPort.on('portClosed', () => {
         this.signal(FBPProcessMessageType.PORT_CLOSURE, {
@@ -184,9 +230,16 @@ class Component extends PortManager {
 
   }
 
+  requestIP(port) {
+
+    console.log("Send request to %s", this.networkId + ":" + port.otherEnd.process);
+    console.log(ipc.of);
+    ipc.of[this.networkId + ":" + port.otherEnd.process].emit('ipRequested', port.otherEnd.port)
+  }
+
   initializeOutPorts(initializationDetails) {
     const component = this;
-    initializationDetails.out.forEach(portName => {
+    _.forEach(initializationDetails.out, (portDetails, portName) => {
       const outputPort = new OutputPort(component, portName);
 
       outputPort.on('portClosed', () => {
@@ -259,11 +312,12 @@ class Component extends PortManager {
 
   runAsyncCallback(callback) {
     this.signal(FBPProcessMessageType.ASYNC_CALLBACK);
-    callback((results) => {
-      this.signal(FBPProcessMessageType.CALLBACK_COMPLETE);
-      this.returnResponse(results);
+    return new Promise((resolve, reject) => {
+      callback((results) => {
+        this.signal(FBPProcessMessageType.CALLBACK_COMPLETE);
+        resolve(results);
+      });
     });
-    return this.awaitResponse();
   }
 
   activate() {
@@ -290,25 +344,12 @@ class Component extends PortManager {
     });
   }
 
-  awaitResponse() {
-    this.log.info({
-      "type": "awaitingResponse",
-      "name": this.name
-    });
-    var response = Fiber.yield();
-    this.log.info({
-      "type": "responseReceived",
-      "name": this.name
-    });
-    return response;
-  }
-
   returnResponse(response) {
     this.log.info({
       "type": "returnResponse",
       "response": response
     });
-    this.componentFiber.run(response);
+    this.componentRoutine(response);
   }
 
   signal(type, details) {

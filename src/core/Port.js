@@ -1,7 +1,8 @@
 import {
   EventEmitter
 } from 'events';
-import bunyan from 'bunyan';
+import bunyan from './bunyan-stub';
+import _ from 'lodash';
 
 
 /**
@@ -13,7 +14,7 @@ class Port extends EventEmitter {
    * @param component {Component}
    * @param portName {string}
    */
-  constructor(component, portName) {
+  constructor(component, portName, otherEnd) {
     super();
     if (component) {
       this.processName = component.name;
@@ -22,6 +23,8 @@ class Port extends EventEmitter {
       this.processName = '';
     }
     this.portName = portName;
+    this.connections = [];
+
     this.log = bunyan.createLogger({
       name: "Port (" + this.processName + "." + this.portName + ")"
     });
@@ -64,12 +67,11 @@ class Port extends EventEmitter {
   }
 
   /**
-   * @returns {number} the total number of IPs associated with this Port. Could be IPs waiting to come int
+   * @returns {number} the total number of IPs associated with this Port. Could be IPs waiting to come into
    * or IPs in the downstream connection.
    */
   getConnectionDepth() {
-    this.emit('connectionDepthRequest');
-    return this.component.awaitResponse();
+    return _.sumBy(this.connections, 'pendingIPCount');
   }
 }
 

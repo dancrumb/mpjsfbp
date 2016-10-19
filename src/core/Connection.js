@@ -3,7 +3,10 @@ import {
   EventEmitter
 } from 'events';
 import IP from './IP';
-import bunyan from 'bunyan';
+import bunyan from './bunyan-stub';
+import Promise from 'bluebird';
+import eventToPromise from 'event-to-promise'
+
 
 /**
  *
@@ -53,74 +56,78 @@ class Connection extends EventEmitter {
 
   /**
    *
-   * @param callback
+   * @returns {Promise}
    */
-  getIP(callback) {
-    const dequeuer = () => {
+  getIP() {
+    const newIPGetter = () => new Promise((resolve, reject) => {
       const ip = this.contents.dequeue();
-      this.contents.removeListener('fifoNoLongerEmpty', dequeuer);
-      this.removeListener('connectionCompleted', dequeuer);
       this.log.info({
         "type": "ipDequeue",
         "name": this.name,
         "ip": ip
       });
-      callback(null, ip);
-    };
+      resolve(ip);
+    });
 
     this.log.info({
       "type": "connectionState",
       "cursor": this.contents.cursor,
       "length": this.contents.length
     });
+
+    var ipResolution = "";
+    let newIP;
     if (!this.couldSendData()) {
-      this.log.info({
-        "type": "getIPResolution",
-        "resolution": "dataDepleted"
-      });
-      process.nextTick(() => callback(null, null));
+      ipResolution = "dataDepleted";
+      newIP = Promise.resolve(null);
     } else if (this.hasData()) {
-      this.log.info({
-        "type": "getIPResolution",
-        "resolution": "dataAvailable"
-      });
-      process.nextTick(dequeuer);
+      ipResolution = "dataAvailable";
+      newIP = newIPGetter();
     } else {
-      this.log.info({
-        "type": "getIPResolution",
-        "resolution": "waitingForData"
+      ipResolution = "waitingForData";
+
+      const fifoHasData = eventToPromise(this.contents, 'fifoNoLongerEmpty');
+      const connectionComplete = eventToPromise(this, 'connectionCompleted');
+      newIP = Promise.some([fifoHasData, connectionComplete]).then(() => {
+        fifoHasData.cancel();
+        connectionComplete.cancel();
+        return newIPGetter();
       });
-      this.contents.once('fifoNoLongerEmpty', dequeuer);
-      this.once('connectionCompleted', dequeuer);
     }
+
+    this.log.info({
+      "type": "getIPResolution",
+      "resolution": ipResolution
+    });
+    return newIP;
   }
 
   /**
    *
    * @param {IP} ip
-   * @param {function} callback
+   * @returns {Promise}
    */
-  putIP(ip, callback) {
+  putIP(ip) {
     if (this.closed) {
-      callback(new Error("Tried to put an IP into a closed connection"));
+      return Promise.reject(new Error("Tried to put an IP into a closed connection"));
     }
 
     const connectionContents = this.contents;
 
-    var ipEnqueuer = () => {
+    var ipPutter = () => new Promise((resolve, reject) => {
       this.log.info({
         "type": "ipEnqueue",
         "name": this.name,
         "ip": ip
       });
       connectionContents.enqueue(ip);
-      callback();
-    };
+      resolve();
+    });
 
     if (connectionContents.length >= this.capacity) {
-      connectionContents.once('fifoValueRemoved', ipEnqueuer);
+      return eventToPromise(connectionContents, 'fifoValueRemoved').then(ipPutter);
     } else {
-      process.nextTick(ipEnqueuer);
+      return ipPutter();
     }
   }
 
